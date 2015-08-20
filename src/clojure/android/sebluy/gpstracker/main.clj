@@ -1,5 +1,6 @@
 (ns android.sebluy.gpstracker.main
   (:require [neko.activity :as activity]
+            [android.sebluy.gpstracker.remote :as remote]
             [neko.intent :as intent]
             [neko.notify :as notify]
             [neko.threading :as threading]))

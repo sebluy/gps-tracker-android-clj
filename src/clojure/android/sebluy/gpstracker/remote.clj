@@ -3,42 +3,92 @@
             [neko.threading :as threading])
   (:import java.net.URL
            java.io.BufferedOutputStream
-           java.net.HttpURLConnection))
+           android.content.Context
+           android.app.Activity))
 
-(defn post [body]
-  (let [url (URL. "https://fierce-dawn-3931.herokuapp.com/api")
-        ^HttpURLConnection connection (.openConnection url)]
-    (doto connection
-      (.setChunkedStreamingMode (count body))
-      (.setDoOutput true)
-      (.setRequestProperty "Content-Type" "application/edn")
-      (.setRequestProperty "charset" "utf-8")
-      (.setRequestProperty "Content-Length" (str (count body))))
-    (let [output-stream (BufferedOutputStream. (.getOutputStream connection))]
-      (doto output-stream
-        (.write (.getBytes body))
-        (.flush))
-      (.getResponseCode connection))))
+(declare upload-path)
 
 (def action
   (pr-str [[:add-path [{:latitude 43.2 :longitude -70.0 :speed 1.4}
                        {:latitude 43.3 :longitude -70.0 :speed 1.5}]]]))
-(post action)
 
-(defn render-ui [activity]
+(defn post [body]
+  (let [url (URL. "https://fierce-dawn-3931.herokuapp.com/api")
+        connection (.openConnection url)]
+    (doto connection
+      (.setDoOutput true)
+      (.setRequestProperty "Content-Type" "application/edn"))
+    (try
+      (let [output-stream (BufferedOutputStream. (.getOutputStream connection))]
+        (try
+          (do (doto output-stream
+                (.write (.getBytes body))
+                (.flush))
+              (.getResponseCode connection))
+          (finally
+            (.close output-stream))))
+      (catch Exception ex ex)
+      (finally
+        (.disconnect connection)))))
+
+(def loading-ui
+  [:linear-layout
+   {:orientation :vertical}
+   [:text-view {:text "Uploading..."}]
+   [:progress-bar {}]])
+
+(def success-ui
+  [:linear-layout
+   {:orientation :vertical}
+   [:text-view {:text "Upload succeded"}]])
+
+(defn failure-ui [activity]
+  [:linear-layout
+   {:orientation :vertical}
+   [:text-view {:text "Upload failed"}]
+   [:button {:text "Retry"
+             :on-click (fn [_] (upload-path activity))}]])
+
+(defn disconnected-ui [activity]
+  [:linear-layout
+   {:orientation :vertical}
+   [:text-view {:text "Network disconnected"}]
+   [:button {:text "Retry"
+             :on-click (fn [_] (upload-path activity))}]])
+
+(defn render-ui [activity status]
   (threading/on-ui
     (activity/set-content-view!
       activity
-      [:linear-layout
-       {:orientation :vertical}
-       [:progress-bar {}]
-       [:text-view {:text "Status"}]])))
+      (condp = status
+        :success success-ui
+        :failure (failure-ui activity)
+        :loading loading-ui
+        :disconnected (disconnected-ui activity)))))
+
+(defn network-available? [activity]
+  (let [connectivity (.getSystemService activity Context/CONNECTIVITY_SERVICE)
+        network-info (.getActiveNetworkInfo connectivity)]
+    (and network-info (.isConnected network-info))))
+
+(defn upload-path [activity]
+  (if (network-available? activity)
+    (do
+      (render-ui activity :loading)
+      (future
+        (let [result (post action)]
+          (threading/on-ui
+            (if (= result 200)
+              (render-ui activity :success)
+              (render-ui activity :failure))))))
+      (render-ui activity :disconnected)))
 
 (activity/defactivity
   android.sebluy.gpstracker.RemoteActivity
-  :key :remote
+  :key :main
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (render-ui this)))
+    (upload-path this)))
+
 
