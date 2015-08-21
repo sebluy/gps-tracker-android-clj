@@ -1,6 +1,7 @@
 (ns android.sebluy.gpstracker.main
   (:require [neko.activity :as activity]
-            [android.sebluy.gpstracker.remote :as remote]
+            [android.sebluy.gpstracker.remote]
+            [android.sebluy.gpstracker.gps]
             [neko.intent :as intent]
             [neko.notify :as notify]
             [neko.threading :as threading]))
@@ -20,7 +21,7 @@
          :on-click (fn [_] (start-activity activity '.RemoteActivity))}]
        [:button
         {:text "Record Path"
-         :on-click (fn [_] (notify/toast "Clicked Record"))}]
+         :on-click (fn [_] (start-activity activity '.TrackingActivity))}]
        [:button
         {:text "Recieve Path"
          :on-click (fn [_] (notify/toast "Clicked Recieve"))}]])))

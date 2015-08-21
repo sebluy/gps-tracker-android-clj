@@ -3,8 +3,7 @@
             [neko.threading :as threading])
   (:import java.net.URL
            java.io.BufferedOutputStream
-           android.content.Context
-           android.app.Activity))
+           android.content.Context))
 
 (declare upload-path)
 
@@ -42,17 +41,10 @@
    {:orientation :vertical}
    [:text-view {:text "Upload succeded"}]])
 
-(defn failure-ui [activity]
+(defn failure-ui [activity msg]
   [:linear-layout
    {:orientation :vertical}
-   [:text-view {:text "Upload failed"}]
-   [:button {:text "Retry"
-             :on-click (fn [_] (upload-path activity))}]])
-
-(defn disconnected-ui [activity]
-  [:linear-layout
-   {:orientation :vertical}
-   [:text-view {:text "Network disconnected"}]
+   [:text-view {:text msg}]
    [:button {:text "Retry"
              :on-click (fn [_] (upload-path activity))}]])
 
@@ -62,9 +54,9 @@
       activity
       (condp = status
         :success success-ui
-        :failure (failure-ui activity)
+        :failure (failure-ui activity "Upload Failed")
         :loading loading-ui
-        :disconnected (disconnected-ui activity)))))
+        :disconnected (failure-ui activity "Network Disconnected")))))
 
 (defn network-available? [activity]
   (let [connectivity (.getSystemService activity Context/CONNECTIVITY_SERVICE)
