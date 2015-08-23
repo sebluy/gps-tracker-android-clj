@@ -77,7 +77,7 @@
 
 (activity/defactivity
   android.sebluy.gpstracker.RemoteActivity
-  :key :main
+  :key :remote
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
