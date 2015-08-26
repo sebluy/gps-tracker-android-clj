@@ -2,9 +2,9 @@
   (:require [neko.activity :as activity]
             [neko.ui.mapping :as mapping]
             [neko.threading :as threading])
-  (:import (android.widget TableLayout
-                           TableRow)
-           (android.view WindowManager$LayoutParams)))
+  (:import [android.widget TableLayout
+                           TableRow]
+           [android.view WindowManager$LayoutParams]))
 
 (mapping/defelement
   :table-layout
@@ -36,7 +36,7 @@
   [:linear-layout {}
    (tracking-table)
    [:button {:text "Pause"}]
-   [:button {:text "Finish"
+   [:button {:text     "Finish"
              :on-click (fn [_] (.finish activity))}]])
 
 (defn render-ui [activity]

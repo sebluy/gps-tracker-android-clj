@@ -9,10 +9,13 @@
   :source-paths ["src/clojure" "src"]
   :java-source-paths ["src/java"]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
-  :plugins [[lein-droid "0.4.0-alpha4"]]
+  :plugins [[lein-droid "0.4.1"]]
+
+  ; neko 4.0.0-alpha4 wont compile
+  ; problem with usb connection? crashes on disconnect/reconnect when repl is active
 
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
-                 [neko/neko "4.0.0-alpha1"]]
+                 [neko/neko "4.0.0-alpha3"]]
   :profiles {:default [:dev]
 
              :dev
