@@ -9,6 +9,8 @@
 (defn start-activity [old-activity new-activity]
   (.startActivity old-activity (intent/intent old-activity new-activity {})))
 
+#_(android.sebluy.gpstracker.gps/keep-screen-on (neko.debug/*a) true)
+
 (defn render-ui [activity]
   (threading/on-ui
     (activity/set-content-view!

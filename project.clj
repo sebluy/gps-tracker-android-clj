@@ -16,6 +16,7 @@
 
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
                  [neko/neko "4.0.0-alpha3"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.google.android.gms/play-services-location "7.8.0" :extension "aar"]]
 
   :profiles {:default [:dev]
@@ -50,7 +51,9 @@
             ;; :force-dex-optimize true
 
             :target-version "19"
-            :aot-exclude-ns ["clojure.parallel" "clojure.core.reducers"
+            :aot-exclude-ns ["cljs.core.async.macros"
+                             "cljs.core.async.impl.ioc-macros"
+                             "clojure.parallel" "clojure.core.reducers"
                              "cljs-tooling.complete" "cljs-tooling.info"
                              "cljs-tooling.util.analysis" "cljs-tooling.util.misc"
                              "cider.nrepl" "cider-nrepl.plugin"
