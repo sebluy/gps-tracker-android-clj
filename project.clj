@@ -2,7 +2,7 @@
   :description "FIXME: Android project description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+            :url  "http://www.eclipse.org/legal/epl-v10.html"}
 
   :global-vars {*warn-on-reflection* true}
 
@@ -15,29 +15,28 @@
   ; problem with usb connection? crashes on disconnect/reconnect when repl is active
 
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
-                 [neko/neko "4.0.0-alpha3"]]
+                 [neko/neko "4.0.0-alpha3"]
+                 [com.google.android.gms/play-services-location "7.8.0" :extension "aar"]]
+
   :profiles {:default [:dev]
 
-             :dev
-             [:android-common :android-user
-              {:dependencies [[org.clojure/tools.nrepl "0.2.10"]]
-               :target-path "target/debug"
-               :android {:aot :all-with-unused
-                         :rename-manifest-package "android.sebluy.gpstracker.debug"
-                         :manifest-options {:app-name "GPSTracker - debug"}}}]
-             :release
-             [:android-common
-              {:target-path "target/release"
-               :android
-               { ;; Specify the path to your private keystore
-                ;; and the the alias of the key you want to
-                ;; sign APKs with.
-                ;; :keystore-path "/home/user/.android/private.keystore"
-                ;; :key-alias "mykeyalias"
+             :dev     [:android-common :android-user
+                       {:dependencies [[org.clojure/tools.nrepl "0.2.10"]]
+                        :target-path  "target/debug"
+                        :android      {:aot                     :all-with-unused
+                                       :rename-manifest-package "android.sebluy.gpstracker.debug"
+                                       :manifest-options        {:app-name "GPSTracker - debug"}}}]
+             :release [:android-common
+                       {:target-path "target/release"
+                        :android     {;; Specify the path to your private keystore
+                                      ;; and the the alias of the key you want to
+                                      ;; sign APKs with.
+                                      ;; :keystore-path "/home/user/.android/private.keystore"
+                                      ;; :key-alias "mykeyalias"
 
-                :ignore-log-priority [:debug :verbose]
-                :aot :all
-                :build-type :release}}]}
+                                      :ignore-log-priority [:debug :verbose]
+                                      :aot                 :all
+                                      :build-type          :release}}]}
 
   :android {;; Specify the path to the Android SDK directory.
             ;; :sdk-path "/home/user/path/to/android-sdk/"
@@ -45,7 +44,7 @@
             ;; Try increasing this value if dexer fails with
             ;; OutOfMemoryException. Set the value according to your
             ;; available RAM.
-            :dex-opts ["-JXmx4096M" "--incremental"]
+            :dex-opts       ["-JXmx4096M" "--incremental"]
 
             ;; If previous option didn't work, uncomment this as well.
             ;; :force-dex-optimize true

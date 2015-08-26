@@ -4,7 +4,11 @@
             [neko.threading :as threading])
   (:import [android.widget TableLayout
                            TableRow]
+           [com.google.android.gms.common.api GoogleApiClient$Builder]
            [android.view WindowManager$LayoutParams]))
+
+(defn make-google-api-client [activity]
+  (GoogleApiClient$Builder. activity))
 
 (mapping/defelement
   :table-layout
