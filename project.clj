@@ -18,6 +18,7 @@
                  [neko/neko "4.0.0-alpha3"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.google.android.gms/play-services-location "7.8.0" :extension "aar"]]
+  ; comment out play-services-location and refresh in cursive to avoid maven error
 
   :profiles {:default [:dev]
 
@@ -58,3 +59,5 @@
                              "cljs-tooling.util.analysis" "cljs-tooling.util.misc"
                              "cider.nrepl" "cider-nrepl.plugin"
                              "cider.nrepl.middleware.util.java.parser"]})
+
+
