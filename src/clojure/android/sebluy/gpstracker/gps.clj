@@ -2,14 +2,18 @@
   (:require [neko.activity :as activity]
             [neko.ui.mapping :as mapping]
             [neko.threading :as threading]
-            [clojure.core.async :as async])
+            [clojure.core.async :as async]
+            [android.sebluy.gpstracker.state :as state])
   (:import [android.widget TableLayout
                            TableRow]
            [com.google.android.gms.common.api GoogleApiClient$Builder
                                               GoogleApiClient$ConnectionCallbacks
                                               GoogleApiClient$OnConnectionFailedListener]
-           [com.google.android.gms.location LocationServices]
-           [android.view WindowManager$LayoutParams]))
+           [com.google.android.gms.location LocationServices
+                                            LocationRequest
+                                            LocationCallback]
+           [android.view WindowManager$LayoutParams]
+           (android.os Looper)))
 
 (def attributes (atom nil))
 
@@ -31,6 +35,20 @@
       (addOnConnectionFailedListener (make-on-connection-failed-listener chan))
       (addApi LocationServices/API)
       (build)))
+
+(defn make-location-callback [control-chan location-chan]
+  (proxy [LocationCallback] []
+    (onLocationAvailability [availability]
+      (if (.isLocationAvailable availability)
+        (async/put! control-chan :tracking-started)
+        (async/put! control-chan :tracking-stopped)))
+    (onLocationResult [location-result]
+      (async/put! location-chan (.getLastLocation location-result)))))
+
+(defn make-location-request []
+  (.. (LocationRequest.)
+      (setInterval 1000)
+      (setPriority LocationRequest/PRIORITY_HIGH_ACCURACY)))
 
 (mapping/defelement
   :table-layout
@@ -63,24 +81,74 @@
   (threading/on-ui
     (activity/set-content-view! activity (ui activity))))
 
+(defn start-location-updates [google-api-client location-listener]
+  (.requestLocationUpdates LocationServices/FusedLocationApi
+                           google-api-client
+                           (make-location-request)
+                           location-listener
+                           (Looper/getMainLooper)))
+
+(defn stop-location-updates [google-api-client location-listener]
+  (.removeLocationUpdates LocationServices/FusedLocationApi
+                          google-api-client
+                          location-listener))
+
+(defn location->map [location]
+  (merge {:latitude  (.getLatitude location)
+          :longitude (.getLongitude location)}
+         (if (.hasSpeed location)
+           {:speed (.getSpeed location)})
+         (if (.hasAccuracy location)
+           {:accuracy (.getAccuracy location)})))
+
+; TODO: replace location listener with listener callback
 (defn run-location-machine [activity]
   (let [status-chan (async/chan)
         control-chan (async/chan)
-        google-api-client (make-google-api-client activity status-chan)]
+        location-chan (async/chan)
+        location-callback (make-location-callback control-chan location-chan)
+        google-api-client (make-google-api-client activity control-chan)]
     (async/go
-      (loop []
-        (while (not= :start (async/<! control-chan)))
-        (.connect google-api-client)
-        (while (not= :stop (async/<! control-chan)))
-        (.disconnect google-api-client)
-        (async/>! status-chan :disconnected)
-        (recur)))
+      (loop [state :disconnected]
+        (async/put! status-chan state)
+        (condp = [state (async/<! control-chan)]
+          [:disconnected :start]
+          (do (.connect google-api-client)
+              (recur :connecting))
+          [:connecting :connected]
+          (do (start-location-updates google-api-client location-callback)
+              (recur :connected))
+          [:connecting :disconnected]
+          (recur :disconnected)
+          [:connected :tracking-started]
+          (recur :tracking)
+          [:connected :stop]
+          (do (.disconnect google-api-client)
+              (recur :disconnected))
+          [:connected :disconnected]
+          (recur :disconnected)
+          [:tracking :stop]
+          (do (stop-location-updates google-api-client location-callback)
+              (.disconnect google-api-client)
+              (recur :disconnected))
+          (recur state))))
     (async/go
       (loop []
         (swap! attributes assoc :status (async/<! status-chan))
         (render-ui activity)
         (recur)))
-    [status-chan control-chan]))
+    (async/go
+      (loop []
+        (let [location (async/<! location-chan)]
+          (swap! state/state update :path #(conj % (location->map location)))
+          (swap! attributes assoc
+                 :latitude (.getLatitude location)
+                 :longitude (.getLongitude location)
+                 :speed (.getSpeed location)
+                 :accuracy (.getAccuracy location)))
+        (render-ui activity)
+        (recur)))
+    [status-chan control-chan location-chan]))
 
 (defn keep-screen-on [activity boolean]
   (threading/on-ui
@@ -98,9 +166,11 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
+    (swap! state/state assoc :path [])
     (reset! attributes {:status :pending})
-    (let [[status-chan control-chan] (run-location-machine this)]
-      (reset! (activity/get-state this) {:channels {:status status-chan :control control-chan}}))
+    (let [[status-chan control-chan location-chan] (run-location-machine this)]
+      (reset! (activity/get-state this)
+              {:channels {:status status-chan :control control-chan :location location-chan}}))
     (render-ui this))
   (onStart
     [this]

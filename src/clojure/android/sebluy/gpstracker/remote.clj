@@ -1,5 +1,6 @@
 (ns android.sebluy.gpstracker.remote
-  (:require [neko.activity :as activity]
+  (:require [android.sebluy.gpstracker.state :as state]
+            [neko.activity :as activity]
             [neko.threading :as threading])
   (:import java.net.URL
            java.io.BufferedOutputStream
@@ -7,9 +8,8 @@
 
 (declare upload-path)
 
-(def action
-  (pr-str [[:add-path [{:latitude 43.2 :longitude -70.0 :speed 1.4}
-                       {:latitude 43.3 :longitude -70.0 :speed 1.5}]]]))
+(defn path->action [path]
+  [[:add-path path]])
 
 (defn post [body]
   (let [url (URL. "https://fierce-dawn-3931.herokuapp.com/api")
@@ -45,7 +45,7 @@
   [:linear-layout
    {:orientation :vertical}
    [:text-view {:text msg}]
-   [:button {:text "Retry"
+   [:button {:text     "Retry"
              :on-click (fn [_] (upload-path activity))}]])
 
 (defn render-ui [activity status]
@@ -63,17 +63,17 @@
         network-info (.getActiveNetworkInfo connectivity)]
     (and network-info (.isConnected network-info))))
 
-(defn upload-path [activity]
+(defn upload-path [activity path]
   (if (network-available? activity)
     (do
       (render-ui activity :loading)
       (future
-        (let [result (post action)]
+        (let [result (post (path->action path))]
           (threading/on-ui
             (if (= result 200)
               (render-ui activity :success)
               (render-ui activity :failure))))))
-      (render-ui activity :disconnected)))
+    (render-ui activity :disconnected)))
 
 (activity/defactivity
   android.sebluy.gpstracker.RemoteActivity
@@ -81,6 +81,6 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (upload-path this)))
+    (upload-path this (@state/state :path))))
 
 
