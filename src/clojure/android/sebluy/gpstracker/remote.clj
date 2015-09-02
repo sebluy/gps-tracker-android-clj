@@ -46,7 +46,7 @@
    {:orientation :vertical}
    [:text-view {:text msg}]
    [:button {:text     "Retry"
-             :on-click (fn [_] (upload-path activity))}]])
+             :on-click (fn [_] (upload-path activity (@state/state :path)))}]])
 
 (defn render-ui [activity status]
   (threading/on-ui
@@ -68,7 +68,7 @@
     (do
       (render-ui activity :loading)
       (future
-        (let [result (post (path->action path))]
+        (let [result (-> path path->action pr-str post)]
           (threading/on-ui
             (if (= result 200)
               (render-ui activity :success)
