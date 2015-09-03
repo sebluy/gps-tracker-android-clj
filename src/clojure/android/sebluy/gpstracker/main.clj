@@ -9,8 +9,6 @@
 (defn start-activity [old-activity new-activity]
   (.startActivity old-activity (intent/intent old-activity new-activity {})))
 
-#_(android.sebluy.gpstracker.gps/keep-screen-on (neko.debug/*a) true)
-
 (defn render-ui [activity]
   (threading/on-ui
     (activity/set-content-view!
@@ -21,6 +19,9 @@
        [:button
         {:text "Upload Path"
          :on-click (fn [_] (start-activity activity '.RemoteActivity))}]
+       [:button
+        {:text "View Paths"
+         :on-click (fn [_] (start-activity activity '.PathListActivity))}]
        [:button
         {:text "Record Path"
          :on-click (fn [_] (start-activity activity '.TrackingActivity))}]

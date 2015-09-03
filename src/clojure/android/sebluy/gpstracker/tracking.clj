@@ -4,12 +4,13 @@
             [neko.threading :as threading]
             [clojure.core.async :as async]
             [android.sebluy.gpstracker.gps :as gps]
-            [android.sebluy.gpstracker.state :as state])
+            [android.sebluy.gpstracker.state :as state]
+            [android.sebluy.gpstracker.path :as path])
   (:import [android.widget TableLayout
                            TableRow]
            [android.view WindowManager$LayoutParams]))
 
-(def attributes (atom nil))
+(def attributes (atom {}))
 
 (mapping/defelement
   :table-layout
@@ -26,17 +27,41 @@
    [:text-view {:text (str title)}]
    [:text-view {:text (str value)}]])
 
-(defn tracking-table [attributes]
+(defn table [attributes]
   (into [:table-layout {}]
         (map (partial apply table-row)
              attributes)))
 
+(defn get-chan [activity key]
+  (get-in @(activity/get-state activity) [:channels key]))
+
+(defn put-chan [activity key message]
+  (async/put! (get-chan activity key) message))
+
+(defn control-button [activity text message]
+  [:button {:text text :on-click (fn [_] (put-chan activity :control message))}])
+
+(defn pause-resume-button [activity]
+   (condp = (@attributes :status)
+    :tracking
+    (control-button activity "Pause" :stop)
+    :disconnected
+    (control-button activity "Resume" :start)
+    nil))
+
+(defn finish-button [activity]
+  [:button {:text     "Finish"
+            :on-click (fn [_] (.finish activity))}])
+
+(defn button-ui [activity]
+  [:linear-layout {}
+   (pause-resume-button activity)
+   (finish-button activity)])
+
 (defn ui [activity]
   [:linear-layout {}
-   (tracking-table @attributes)
-   [:button {:text "Pause"}]
-   [:button {:text     "Finish"
-             :on-click (fn [_] (.finish activity))}]])
+   (table @attributes)
+   (button-ui activity)])
 
 (defn render-ui [activity]
   (threading/on-ui
@@ -49,17 +74,6 @@
         (.addFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)
         (.clearFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)))))
 
-(defn get-chan [activity key]
-  (get-in @(activity/get-state activity) [:channels key]))
-
-(defn location->map [location]
-  (merge {:latitude  (.getLatitude location)
-          :longitude (.getLongitude location)}
-         (if (.hasSpeed location)
-           {:speed (.getSpeed location)})
-         (if (.hasAccuracy location)
-           {:accuracy (.getAccuracy location)})))
-
 (defn run-render-machine [activity status-chan location-chan]
   (async/go-loop []
     (swap! attributes assoc :status (async/<! status-chan))
@@ -67,12 +81,13 @@
     (recur))
   (async/go-loop []
     (let [location (async/<! location-chan)]
-      (swap! state/state update :path #(conj % (location->map location)))
-      (swap! attributes assoc
-             :latitude (.getLatitude location)
-             :longitude (.getLongitude location)
-             :speed (.getSpeed location)
-             :accuracy (.getAccuracy location)))
+      (swap! state/state update :path #(path/add-point % (path/location->point location)))
+      (let [path (@state/state :path)]
+        (swap! attributes assoc
+               :current-speed (path/current-speed path)
+               :average-speed (path/average-speed path)
+               :time-elapsed (/ (path/time-elapsed path) 1000.0 60.0)
+               :total-distance (path :total-distance))))
     (render-ui activity)
     (recur)))
 
@@ -82,8 +97,7 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (swap! state/state assoc :path [])
-    (reset! attributes {:status :pending})
+    (swap! state/state assoc :path (path/make-new))
     (let [[status-chan control-chan location-chan] (gps/run-location-machine this)]
       (run-render-machine this status-chan location-chan)
       (reset! (activity/get-state this)

@@ -54,33 +54,53 @@
                           google-api-client
                           location-listener))
 
+; kind of a hair ball but it works
 (defn run-location-machine [activity]
+  "returns three channels: status, control, and location
+   status chan (output) sends a status of :disconnected :connecting :tracking
+   control chan (input) recieves either :start or :stop
+   location chan (output) sends locations as they are recieved by the gps"
   (let [status-chan (async/chan)
         control-chan (async/chan)
         location-chan (async/chan)
         location-callback (make-location-callback control-chan location-chan)
         google-api-client (make-google-api-client activity control-chan)]
+    (async/put! status-chan :disconnected)
     (async/go-loop [state :disconnected]
-      (async/put! status-chan state)
       (condp = [state (async/<! control-chan)]
         [:disconnected :start]
         (do (.connect google-api-client)
+            (async/put! status-chan :connecting)
             (recur :connecting))
         [:connecting :connected]
         (do (start-location-updates google-api-client location-callback)
             (recur :connected))
         [:connecting :disconnected]
-        (recur :disconnected)
-        [:connected :tracking-started]
-        (recur :tracking)
-        [:connected :stop]
+        (do (async/put! status-chan :disconnected)
+            (recur :disconnected))
+        [:connecting :stop]
         (do (.disconnect google-api-client)
+            (async/put! status-chan :disconnected)
+            (recur :disconnected))
+        [:connected :tracking-started]
+        (do (async/put! status-chan :tracking)
+            (recur :tracking))
+        [:connected :stop]
+        (do (stop-location-updates google-api-client location-callback)
+            (.disconnect google-api-client)
+            (async/put! status-chan :disconnected)
             (recur :disconnected))
         [:connected :disconnected]
-        (recur :disconnected)
+        (do (stop-location-updates google-api-client location-callback)
+            (async/put! status-chan :disconnected)
+            (recur :disconnected))
+        [:tracking :tracking-stopped]
+        (do (async/put! status-chan :connecting)
+            (recur :connected))
         [:tracking :stop]
         (do (stop-location-updates google-api-client location-callback)
             (.disconnect google-api-client)
+            (async/put! status-chan :disconnected)
             (recur :disconnected))
         (recur state)))
     [status-chan control-chan location-chan]))

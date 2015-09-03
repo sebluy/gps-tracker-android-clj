@@ -9,7 +9,11 @@
 (declare upload-path)
 
 (defn path->action [path]
-  [[:add-path path]])
+  [[:add-path
+    (->> (path :points)
+         (map (fn [point]
+                (select-keys point #{:latitude :longitude :speed :accuracy})))
+         (into []))]])
 
 (defn post [body]
   (let [url (URL. "https://fierce-dawn-3931.herokuapp.com/api")

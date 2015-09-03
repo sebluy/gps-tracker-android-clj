@@ -25,6 +25,7 @@
     </activity>
     <activity android:name=".RemoteActivity"/>
     <activity android:name=".TrackingActivity"/>
+    <activity android:name=".PathListActivity"/>
   </application>
 
   <uses-permission android:name="android.permission.INTERNET"/>
