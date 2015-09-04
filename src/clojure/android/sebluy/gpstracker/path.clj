@@ -1,17 +1,19 @@
 (ns android.sebluy.gpstracker.path
-  (:import [android.location Location]))
+  (:import [android.location Location]
+           [java.util Date]))
 
 (defn location->point [location]
   (merge {:latitude  (.getLatitude location)
           :longitude (.getLongitude location)
-          :time (.getTime location)}
+          :time      (.getTime location)}
          (if (.hasSpeed location)
            {:speed (.getSpeed location)})
          (if (.hasAccuracy location)
            {:accuracy (.getAccuracy location)})))
 
 (defn make-new []
-  {:points            []
+  {:created-at        (Date.)
+   :points            []
    :speed-acum        0.0
    :points-with-speed 0
    :total-distance    0.0})

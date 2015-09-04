@@ -1,7 +1,8 @@
 (ns android.sebluy.gpstracker.path-list
   (:require [neko.activity :as activity]
             [neko.threading :as threading]
-            [neko.find-view :as find-view])
+            [neko.find-view :as find-view]
+            [android.sebluy.gpstracker.state :as state])
   (:import [android.widget ArrayAdapter]
            [android R$layout]))
 
@@ -21,5 +22,6 @@
     (.superOnCreate this bundle)
     (render-ui this)
     (let [[list-view] (find-view/find-views this ::list-view)]
-      (.setAdapter list-view (ArrayAdapter. this R$layout/simple_list_item_1 ["hi" "you"])))))
+      (.setAdapter list-view (ArrayAdapter. this R$layout/simple_list_item_1
+                                            (or (keys (@state/state :paths)) []))))))
 

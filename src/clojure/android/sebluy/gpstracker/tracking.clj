@@ -74,15 +74,15 @@
         (.addFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)
         (.clearFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)))))
 
-(defn run-render-machine [activity status-chan location-chan]
+(defn run-render-machine [activity status-chan location-chan path-id]
   (async/go-loop []
     (swap! attributes assoc :status (async/<! status-chan))
     (render-ui activity)
     (recur))
   (async/go-loop []
     (let [location (async/<! location-chan)]
-      (swap! state/state update :path #(path/add-point % (path/location->point location)))
-      (let [path (@state/state :path)]
+      (swap! state/state update-in [:paths path-id] #(path/add-point % (path/location->point location)))
+      (let [path (get-in @state/state [:paths path-id])]
         (swap! attributes assoc
                :current-speed (path/current-speed path)
                :average-speed (path/average-speed path)
@@ -97,12 +97,14 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (swap! state/state assoc :path (path/make-new))
-    (let [[status-chan control-chan location-chan] (gps/run-location-machine this)]
-      (run-render-machine this status-chan location-chan)
-      (reset! (activity/get-state this)
-              {:channels {:status status-chan :control control-chan :location location-chan}}))
-    (render-ui this))
+    (let [new-path (path/make-new)
+          path-id (new-path :created-at)]
+      (swap! state/state assoc-in [:paths path-id] new-path)
+      (let [[status-chan control-chan location-chan] (gps/run-location-machine this)]
+        (run-render-machine this status-chan location-chan path-id)
+        (reset! (activity/get-state this)
+                {:channels {:status status-chan :control control-chan :location location-chan}}))
+      (render-ui this)))
   (onStart
     [this]
     (.superOnStart this)
