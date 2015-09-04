@@ -1,6 +1,5 @@
 (ns android.sebluy.gpstracker.gps
-  (:require [clojure.core.async :as async]
-            [android.sebluy.gpstracker.state :as state])
+  (:require [clojure.core.async :as async])
   (:import [com.google.android.gms.common.api GoogleApiClient$Builder
                                               GoogleApiClient$ConnectionCallbacks
                                               GoogleApiClient$OnConnectionFailedListener]
