@@ -59,7 +59,7 @@
    (finish-button activity)])
 
 (defn ui [activity]
-  [:linear-layout {}
+  [:linear-layout {:orientation :vertical}
    (table @attributes)
    (button-ui activity)])
 
