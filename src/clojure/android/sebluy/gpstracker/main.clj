@@ -6,7 +6,6 @@
             [android.sebluy.gpstracker.path-list]
             [android.sebluy.gpstracker.show-path]
             [android.sebluy.gpstracker.util :as util]
-            [neko.intent :as intent]
             [neko.notify :as notify]
             [neko.threading :as threading]))
 
@@ -17,9 +16,6 @@
       [:linear-layout
        {:orientation :vertical}
        [:text-view {:text "Current Path"}]
-       [:button
-        {:text "Upload Path"
-         :on-click (fn [_] (util/start-activity activity '.RemoteActivity))}]
        [:button
         {:text "View Paths"
          :on-click (fn [_] (util/start-activity activity '.PathListActivity))}]

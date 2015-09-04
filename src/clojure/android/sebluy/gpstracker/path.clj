@@ -47,3 +47,9 @@
       (- (-> points last :time)
          (-> points first :time))
       0)))
+
+(defn attributes [path]
+  {:current-speed  (current-speed path)
+   :average-speed  (average-speed path)
+   :time-elapsed   (/ (time-elapsed path) 1000.0 60.0)
+   :total-distance (path :total-distance)})

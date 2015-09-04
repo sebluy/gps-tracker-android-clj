@@ -1,7 +1,8 @@
 (ns android.sebluy.gpstracker.remote
   (:require [android.sebluy.gpstracker.state :as state]
             [neko.activity :as activity]
-            [neko.threading :as threading])
+            [neko.threading :as threading]
+            [android.sebluy.gpstracker.util :as util])
   (:import java.net.URL
            java.io.BufferedOutputStream
            android.content.Context))
@@ -85,6 +86,14 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (upload-path this (@state/state :path))))
+    (upload-path this (@state/state :upload)))
+  (onStart
+    [this]
+    (.superOnStart this)
+    (util/keep-screen-on this true))
+  (onStop
+    [this]
+    (.superOnStop this)
+    (util/keep-screen-on this false)))
 
 
