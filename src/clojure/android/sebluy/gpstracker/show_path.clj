@@ -25,5 +25,9 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (render-ui this (@state/state :show-path))))
+    (render-ui this (@state/state :show-path)))
+  (onBackPressed
+    [this]
+    (.superOnBackPressed this)
+    (swap! state/state dissoc :show-path)))
 

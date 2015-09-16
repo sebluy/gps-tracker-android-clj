@@ -94,6 +94,10 @@
   (onStop
     [this]
     (.superOnStop this)
-    (util/keep-screen-on this false)))
+    (util/keep-screen-on this false))
+  (onBackPressed
+    [this]
+    (.superOnBackPressed this)
+    (swap! state/state dissoc :upload)))
 
 

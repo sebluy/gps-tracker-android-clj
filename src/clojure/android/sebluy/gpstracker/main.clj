@@ -6,7 +6,6 @@
             [android.sebluy.gpstracker.path-list]
             [android.sebluy.gpstracker.show-path]
             [android.sebluy.gpstracker.util :as util]
-            [neko.notify :as notify]
             [neko.threading :as threading]))
 
 (defn render-ui [activity]
@@ -24,7 +23,7 @@
          :on-click (fn [_] (util/start-activity activity '.TrackingActivity))}]
        [:button
         {:text "Recieve Path"
-         :on-click (fn [_] (notify/toast "Clicked Recieve"))}]])))
+         :on-click (fn [_] (util/start-activity activity '.ReceivePathActivity))}]])))
 
 (activity/defactivity
   android.sebluy.gpstracker.MainActivity
