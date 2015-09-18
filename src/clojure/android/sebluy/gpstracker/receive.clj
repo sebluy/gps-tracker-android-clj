@@ -79,6 +79,10 @@
   (let [scanner (scanner/start-scan (get-bluetooth-adapter activity) #(add-device activity %))]
     (swap! state/state assoc :scanner scanner)))
 
+(get-bluetooth-adapter (neko.debug/*a))
+
+(@state/state :devices)
+
 (defn stop-scan [activity]
   (scanner/stop-scan (get-bluetooth-adapter activity) (@state/state :scanner))
   (swap! state/state dissoc :scanner)
