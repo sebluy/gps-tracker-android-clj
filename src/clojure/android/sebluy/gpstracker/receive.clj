@@ -3,6 +3,7 @@
             [neko.threading :as threading]
             [android.sebluy.gpstracker.util :as util]
             [android.sebluy.gpstracker.bluetooth-scanner :as scanner]
+            [android.sebluy.gpstracker.bluetooth-loader :as loader]
             [neko.find-view :as find-view]
             [android.sebluy.gpstracker.state :as state])
   (:import [android.content Context Intent]
@@ -10,23 +11,15 @@
            [android.app Activity]
            [android R$layout]
            [android.widget ArrayAdapter
-                           AdapterView$OnItemClickListener]))
-
-(defn make-list-click-listener [activity]
-  (reify AdapterView$OnItemClickListener
-    (onItemClick [_ _ _ position _])))
-
-(defn fill-device-list [devices]
-  (fn [activity]
-    (let [[list-view] (find-view/find-views activity ::list-view)]
-      (.setAdapter list-view (ArrayAdapter. activity R$layout/simple_list_item_1
-                                            (or (keys devices) ["No devices"])))
-      (.setOnItemClickListener list-view (make-list-click-listener activity)))))
+                           AdapterView$OnItemClickListener]
+           [android.os Handler]))
 
 (declare stop-scan start-scan)
 
 (defn scanning-ui [activity]
   [:linear-layout {:orientation :vertical}
+   [:text-view {:text "Scanning..."}]
+   [:progress-bar {}]
    [:list-view {:id ::list-view}]
    [:button {:text "Stop"
              :on-click (fn [_] (stop-scan activity))}]])
@@ -37,9 +30,9 @@
    [:button {:text "Start"
              :on-click (fn [_] (start-scan activity))}]])
 
-(defn loading-ui []
+(defn loading-ui [device-name]
   [:linear-layout {:orientation :vertical}
-   [:text-view {:text "Loading..."}]
+   [:text-view {:text (str "Loading..." device-name)}]
    [:progress-bar {}]])
 
 (defn summary-ui []
@@ -50,6 +43,31 @@
   (threading/on-ui
     (activity/set-content-view! activity ui)
     (post-render-fn activity)))
+
+(swap! state/state dissoc :debug)
+(@state/state :debug)
+(@state/state :values)
+
+(defn load-path-from-device [activity device]
+  (swap! state/state update :debug conj :starting-load)
+  (loader/load-from-device activity device
+                           (fn [value]
+                             (swap! state/state update :values conj value)))
+  (render-ui activity (loading-ui (.getName device)) identity))
+
+(defn make-list-click-listener [activity]
+  (reify AdapterView$OnItemClickListener
+    (onItemClick [_ _ _ position _]
+      (swap! state/state assoc :state :loading)
+      (stop-scan activity)
+      (load-path-from-device activity (nth (vals (@state/state :devices)) position)))))
+
+(defn fill-device-list [devices]
+  (fn [activity]
+    (let [[list-view] (find-view/find-views activity ::list-view)]
+      (.setAdapter list-view (ArrayAdapter. activity R$layout/simple_list_item_1
+                                            (or (keys devices) ["No devices"])))
+      (.setOnItemClickListener list-view (make-list-click-listener activity)))))
 
 (defn device-key [device]
   (or (.getName device) (.getAddress device)))
@@ -77,16 +95,16 @@
     (swap! state/state assoc :devices devices)
     (render-ui activity (scanning-ui activity) (fill-device-list devices)))
   (let [scanner (scanner/start-scan (get-bluetooth-adapter activity) #(add-device activity %))]
-    (swap! state/state assoc :scanner scanner)))
-
-(get-bluetooth-adapter (neko.debug/*a))
-
-(@state/state :devices)
+    (swap! state/state assoc :scanner scanner :state :scanning))
+  (.postDelayed (Handler.) #(stop-scan activity) 5000))
 
 (defn stop-scan [activity]
-  (scanner/stop-scan (get-bluetooth-adapter activity) (@state/state :scanner))
-  (swap! state/state dissoc :scanner)
-  (render-ui activity (idle-scan-ui activity) (fill-device-list (@state/state :devices))))
+  (when-let [scanner (@state/state :scanner)]
+    (scanner/stop-scan (get-bluetooth-adapter activity) scanner)
+    (swap! state/state dissoc :scanner))
+  (when (= (@state/state :state) :scanning)
+    (swap! state/state assoc :state :idling)
+    (render-ui activity (idle-scan-ui activity) (fill-device-list (@state/state :devices)))))
 
 (activity/defactivity
   android.sebluy.gpstracker.ReceivePathActivity
