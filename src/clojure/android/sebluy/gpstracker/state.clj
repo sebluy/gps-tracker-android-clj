@@ -2,3 +2,4 @@
 
 (def state (atom {}))
 
+@state

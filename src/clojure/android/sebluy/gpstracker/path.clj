@@ -11,13 +11,6 @@
          (if (.hasAccuracy location)
            {:accuracy (.getAccuracy location)})))
 
-(defn make-new []
-  {:created-at        (Date.)
-   :points            []
-   :speed-acum        0.0
-   :points-with-speed 0
-   :total-distance    0.0})
-
 (defn distance-between [a b]
   (let [results (float-array 1)]
     (Location/distanceBetween (a :latitude) (a :longitude)
@@ -32,6 +25,15 @@
       (update :total-distance + (if (seq (path :points))
                                   (distance-between (last (path :points)) point)
                                   0))))
+
+(defn make-new
+  ([] {:created-at        (Date.)
+       :points            []
+       :speed-acum        0.0
+       :points-with-speed 0
+       :total-distance    0.0})
+  ([points]
+   (reduce add-point (make-new) points)))
 
 (defn current-speed [path]
   (-> path :points last :speed))
@@ -48,8 +50,15 @@
          (-> points first :time))
       0)))
 
+(defn parse-path [raw-path]
+  (if (not= ["start" "finish"] [(first raw-path) (last raw-path)])
+    :error
+    (mapv (fn [[latitude longitude speed]]
+        {:latitude latitude :longitude longitude :speed speed})
+        (partition 3 3 nil (map #(Double/valueOf %) (pop (into [] (rest raw-path))))))))
+
 (defn attributes [path]
   {:current-speed  (current-speed path)
    :average-speed  (average-speed path)
-   :time-elapsed   (/ (time-elapsed path) 1000.0 60.0)
+;   :time-elapsed   (/ (time-elapsed path) 1000.0 60.0)
    :total-distance (path :total-distance)})

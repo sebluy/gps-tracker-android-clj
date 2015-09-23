@@ -5,14 +5,17 @@
             [android.sebluy.gpstracker.bluetooth-scanner :as scanner]
             [android.sebluy.gpstracker.bluetooth-loader :as loader]
             [neko.find-view :as find-view]
-            [android.sebluy.gpstracker.state :as state])
+            [android.sebluy.gpstracker.state :as state]
+            [android.sebluy.gpstracker.path :as path]
+            [android.sebluy.gpstracker.debug :as debug])
   (:import [android.content Context Intent]
            [android.bluetooth BluetoothAdapter]
            [android.app Activity]
            [android R$layout]
            [android.widget ArrayAdapter
                            AdapterView$OnItemClickListener]
-           [android.os Handler]))
+           [android.os Handler]
+           [java.util Date]))
 
 (declare stop-scan start-scan)
 
@@ -44,15 +47,20 @@
     (activity/set-content-view! activity ui)
     (post-render-fn activity)))
 
-(swap! state/state dissoc :debug)
-(@state/state :debug)
-(@state/state :values)
+(defn add-path [state path]
+  (assoc-in state [:paths (path :created-at)] path))
 
 (defn load-path-from-device [activity device]
-  (swap! state/state update :debug conj :starting-load)
+  (swap! state/state assoc :values [])
   (loader/load-from-device activity device
                            (fn [value]
-                             (swap! state/state update :values conj value)))
+                             (swap! state/state update :values conj value)
+                             (when (= value "finish")
+                               (swap! state/state (fn [state]
+                                                    (-> state
+                                                        (add-path (path/make-new (path/parse-path (state :values))))
+                                                        (dissoc :devices :state :values))))
+                               (render-ui activity (summary-ui) identity))))
   (render-ui activity (loading-ui (.getName device)) identity))
 
 (defn make-list-click-listener [activity]
