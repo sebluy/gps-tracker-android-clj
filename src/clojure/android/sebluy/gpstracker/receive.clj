@@ -17,6 +17,15 @@
            [android.os Handler]
            [java.util Date]))
 
+(def device (get-in @state/state [:devices "UART"]))
+(def activity (neko.debug/*a))
+(@state/state :debug)
+(debug/push "working")
+(def fns (loader/new-serial-bluetooth activity device #(debug/push "Connected") #(debug/push (str "Received" %))))
+((fns :transmit) "hi")
+(@state/state :debug)
+device
+
 (declare stop-scan start-scan)
 
 (defn scanning-ui [activity]
@@ -24,13 +33,13 @@
    [:text-view {:text "Scanning..."}]
    [:progress-bar {}]
    [:list-view {:id ::list-view}]
-   [:button {:text "Stop"
+   [:button {:text     "Stop"
              :on-click (fn [_] (stop-scan activity))}]])
 
 (defn idle-scan-ui [activity]
   [:linear-layout {:orientation :vertical}
    [:list-view {:id ::list-view}]
-   [:button {:text "Start"
+   [:button {:text     "Start"
              :on-click (fn [_] (start-scan activity))}]])
 
 (defn loading-ui [device-name]
@@ -52,15 +61,17 @@
 
 (defn load-path-from-device [activity device]
   (swap! state/state assoc :values [])
-  (loader/load-from-device activity device
-                           (fn [value]
-                             (swap! state/state update :values conj value)
-                             (when (= value "finish")
-                               (swap! state/state (fn [state]
-                                                    (-> state
-                                                        (add-path (path/make-new (path/parse-path (state :values))))
-                                                        (dissoc :devices :state :values))))
-                               (render-ui activity (summary-ui) identity))))
+  (loader/new-serial-bluetooth
+    activity device
+    identity
+    (fn [value]
+      (swap! state/state update :values conj value)
+      (when (= value "finish")
+        (swap! state/state (fn [state]
+                             (-> state
+                                 (add-path (path/make-new (path/parse-path (state :values))))
+                                 (dissoc :devices :state :values))))
+        (render-ui activity (summary-ui) identity))))
   (render-ui activity (loading-ui (.getName device)) identity))
 
 (defn make-list-click-listener [activity]
