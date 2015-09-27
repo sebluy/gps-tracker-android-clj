@@ -8,30 +8,30 @@
             [android.sebluy.gpstracker.state :as state]
             [android.sebluy.gpstracker.path :as path]
             [android.sebluy.gpstracker.debug :as debug])
-  (:import [android.content Context Intent]
-           [android.bluetooth BluetoothAdapter]
-           [android.app Activity]
+  (:import [android.content Context]
+           [android.bluetooth BluetoothAdapter BluetoothDevice]
            [android R$layout]
            [android.widget ArrayAdapter
-                           AdapterView$OnItemClickListener]
+                           AdapterView$OnItemClickListener ListView]
            [android.os Handler]
-           [java.util Date]))
+           [java.util List]))
 
+(comment
 (def device (get-in @state/state [:devices "UART"]))
 (def activity (neko.debug/*a))
 (@state/state :debug)
 (debug/push "working")
 (def serial (loader/new-serial-bluetooth activity device
                                          #(loader/transmit % "transmit-on-connect")
-                                         #(debug/push (str "Received " %))))
+                                         #(debug/push (str "Received " %)))))
 
-(dotimes [n 10]
-  (loader/transmit serial (str n)))
-(loader/disconnect serial)
-(@state/state :debug)
-device
+;(dotimes [n 10]
+;  (loader/transmit serial (str n)))
+;(loader/disconnect serial)
+;(@state/state :debug)
+;device
 
-(def waypoint-path [{:latitude 1.0 :longitude 2.0}
+#_(def waypoint-path [{:latitude 1.0 :longitude 2.0}
                     {:latitude 3.0 :longitude 4.0}])
 
 (defn transmit-waypoints [serial waypoint-path]
@@ -41,7 +41,7 @@ device
   (loader/transmit serial "finish"))
 
 
-(transmit-waypoints serial waypoint-path)
+;(transmit-waypoints serial waypoint-path)
 
 (declare stop-scan start-scan)
 
@@ -89,7 +89,7 @@ device
                                  (add-path (path/make-new (path/parse-path (state :values))))
                                  (dissoc :devices :state :values))))
         (render-ui activity (summary-ui) identity))))
-  (render-ui activity (loading-ui (.getName device)) identity))
+  (render-ui activity (loading-ui (.getName ^BluetoothDevice device)) identity))
 
 (defn make-list-click-listener [activity]
   (reify AdapterView$OnItemClickListener
@@ -100,12 +100,12 @@ device
 
 (defn fill-device-list [devices]
   (fn [activity]
-    (let [[list-view] (find-view/find-views activity ::list-view)]
-      (.setAdapter list-view (ArrayAdapter. activity R$layout/simple_list_item_1
-                                            (or (keys devices) ["No devices"])))
+    (let [[^ListView list-view] (find-view/find-views activity ::list-view)]
+      (.setAdapter list-view (ArrayAdapter. ^Context activity ^int R$layout/simple_list_item_1
+                                            ^List (or (keys devices) ["No devices"])))
       (.setOnItemClickListener list-view (make-list-click-listener activity)))))
 
-(defn device-key [device]
+(defn device-key [^BluetoothDevice device]
   (or (.getName device) (.getAddress device)))
 
 (defn add-device [activity device]
@@ -113,30 +113,23 @@ device
     (swap! state/state assoc-in [:devices key] device)
     (render-ui activity (scanning-ui activity) (fill-device-list (@state/state :devices)))))
 
-(defn get-bluetooth-adapter [activity]
-  (.. activity (getSystemService Context/BLUETOOTH_SERVICE) getAdapter))
-
-(defn bluetooth-enabled? [activity]
-  (let [bluetooth-adapter (get-bluetooth-adapter activity)]
-    (and (some? bluetooth-adapter) (.isEnabled bluetooth-adapter))))
-
-(defn get-bonded-devices [adapter]
+(defn get-bonded-devices [^BluetoothAdapter adapter]
   (reduce (fn [devices device]
             (assoc devices (device-key device) device))
           {} (.getBondedDevices adapter)))
 
 (defn start-scan [activity]
-  (let [adapter (get-bluetooth-adapter activity)
+  (let [adapter (util/get-bluetooth-adapter activity)
         devices (get-bonded-devices adapter)]
     (swap! state/state assoc :devices devices)
     (render-ui activity (scanning-ui activity) (fill-device-list devices)))
-  (let [scanner (scanner/start-scan (get-bluetooth-adapter activity) #(add-device activity %))]
+  (let [scanner (scanner/start-scan (util/get-bluetooth-adapter activity) #(add-device activity %))]
     (swap! state/state assoc :scanner scanner :state :scanning))
   (.postDelayed (Handler.) #(stop-scan activity) 5000))
 
 (defn stop-scan [activity]
   (when-let [scanner (@state/state :scanner)]
-    (scanner/stop-scan (get-bluetooth-adapter activity) scanner)
+    (scanner/stop-scan (util/get-bluetooth-adapter activity) scanner)
     (swap! state/state dissoc :scanner))
   (when (= (@state/state :state) :scanning)
     (swap! state/state assoc :state :idling)
@@ -148,8 +141,6 @@ device
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (when-not (bluetooth-enabled? this)
-      (.startActivityForResult this (Intent. BluetoothAdapter/ACTION_REQUEST_ENABLE) 0))
     (start-scan this))
   (onStart
     [this]
@@ -158,9 +149,6 @@ device
   (onStop
     [this]
     (.superOnStop this)
-    (util/keep-screen-on this false))
-  (onActivityResult
-    [this _ result _]
-    (if (not= result Activity/RESULT_OK)
-      (.finish this))))
+    (util/keep-screen-on this false)))
+
 

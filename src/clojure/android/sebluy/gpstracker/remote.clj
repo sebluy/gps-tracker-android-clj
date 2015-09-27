@@ -3,9 +3,12 @@
             [neko.activity :as activity]
             [neko.threading :as threading]
             [android.sebluy.gpstracker.util :as util])
-  (:import java.net.URL
-           java.io.BufferedOutputStream
-           android.content.Context))
+  (:import [java.net URL]
+           [java.io BufferedOutputStream BufferedReader InputStreamReader]
+           [android.content Context]
+           [android.net ConnectivityManager]
+           [java.net HttpURLConnection]
+           [android.app Activity]))
 
 (declare upload-path)
 
@@ -16,21 +19,31 @@
                 (select-keys point #{:latitude :longitude :speed :accuracy})))
          (into []))]])
 
-(defn post [body]
+(defn post [^String body]
   (let [url (URL. "https://fierce-dawn-3931.herokuapp.com/api")
-        connection (.openConnection url)]
+        ^HttpURLConnection connection (.openConnection url)]
     (doto connection
       (.setDoOutput true)
+      (.setDoInput true)
       (.setRequestProperty "Content-Type" "application/edn"))
     (try
       (let [output-stream (BufferedOutputStream. (.getOutputStream connection))]
         (try
           (do (doto output-stream
                 (.write (.getBytes body))
-                (.flush))
-              (.getResponseCode connection))
+                (.flush)))
           (finally
             (.close output-stream))))
+      (let [input-reader (BufferedReader. (InputStreamReader. (.getInputStream connection)))]
+        (try
+          (let [response-code (.getResponseCode connection)
+                response (loop [response ""]
+                           (if-let [response-chunk (.readLine input-reader)]
+                             (recur (str response response-chunk))
+                             response))]
+            [response-code response])
+          (finally
+            (.close input-reader))))
       (catch Exception ex ex)
       (finally
         (.disconnect connection)))))
@@ -63,9 +76,9 @@
         :loading loading-ui
         :disconnected (failure-ui activity "Network Disconnected")))))
 
-(defn network-available? [activity]
+(defn network-available? [^Activity activity]
   (let [connectivity (.getSystemService activity Context/CONNECTIVITY_SERVICE)
-        network-info (.getActiveNetworkInfo connectivity)]
+        network-info (.getActiveNetworkInfo ^ConnectivityManager connectivity)]
     (and network-info (.isConnected network-info))))
 
 (defn upload-path [activity path]
@@ -79,6 +92,18 @@
               (render-ui activity :success)
               (render-ui activity :failure))))))
     (render-ui activity :disconnected)))
+
+#_(defn get-waypoints [activity]
+    (if (network-available? activity)
+      (do
+        (render-ui activity :loading)
+        (future
+          (let [result (-> path path->action pr-str post)]
+            (threading/on-ui
+              (if (= result 200)
+                (render-ui activity :success)
+                (render-ui activity :failure))))))
+      (render-ui activity :disconnected)))
 
 (activity/defactivity
   android.sebluy.gpstracker.RemoteActivity
