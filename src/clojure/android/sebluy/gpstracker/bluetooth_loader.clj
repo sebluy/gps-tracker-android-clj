@@ -26,7 +26,7 @@
     (onServicesDiscovered
       [gatt status]
       (proxy-super onServicesDiscovered gatt status)
-      (on-connect)
+      (on-connect gatt)
       (enable-tx-notifications gatt))
     (onCharacteristicChanged
       [gatt characteristic]
@@ -34,17 +34,17 @@
       (let [value (String. (.getValue characteristic) "UTF-8")]
         (on-receive value)))))
 
+(defn new-serial-bluetooth [activity device on-connect on-receive]
+  (let [gatt (.connectGatt device activity false (make-gatt-callback on-connect on-receive))]
+    (.discoverServices gatt)
+    gatt))
+
+(defn disconnect [gatt]
+  (.close gatt)
+  (.disconnect gatt))
+
 (defn transmit [gatt value]
   (let [rx-service (.getService gatt RX_SERVICE_UUID)
         characteristic (.getCharacteristic rx-service RX_CHARA_UUID)]
     (.setValue characteristic value)
     (.writeCharacteristic gatt characteristic)))
-
-
-(defn new-serial-bluetooth [activity device on-connect on-receive]
-  (let [gatt (.connectGatt device activity false (make-gatt-callback on-connect on-receive))]
-    (.discoverServices gatt)
-    {:close #(.close gatt) :transmit (partial transmit gatt)}))
-
-
-
