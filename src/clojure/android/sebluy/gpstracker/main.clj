@@ -1,7 +1,7 @@
 (ns android.sebluy.gpstracker.main
   (:require [neko.activity :as activity]
     ; require activity namespaces
-            [android.sebluy.gpstracker.remote]
+            [android.sebluy.gpstracker.remote.activity]
             [android.sebluy.gpstracker.gps]
             [android.sebluy.gpstracker.path-list]
             [android.sebluy.gpstracker.show-path]

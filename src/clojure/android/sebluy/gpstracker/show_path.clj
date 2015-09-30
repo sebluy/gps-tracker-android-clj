@@ -16,7 +16,7 @@
        [:button
         {:text     "Upload"
          :on-click (fn [_]
-                     (swap! state/state assoc :upload path)
+                     (swap! state/state assoc-in [:remote :path] path)
                      (util/start-activity activity '.RemoteActivity))}]])))
 
 (activity/defactivity

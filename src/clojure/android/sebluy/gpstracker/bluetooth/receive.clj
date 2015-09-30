@@ -16,32 +16,11 @@
            [android.os Handler]
            [java.util List]))
 
-(comment
-(def device (get-in @state/state [:devices "UART"]))
-(def activity (neko.debug/*a))
-(@state/state :debug)
-(debug/push "working")
-(def serial (loader/new-serial-bluetooth activity device
-                                         #(loader/transmit % "transmit-on-connect")
-                                         #(debug/push (str "Received " %)))))
-
-;(dotimes [n 10]
-;  (loader/transmit serial (str n)))
-;(loader/disconnect serial)
-;(@state/state :debug)
-;device
-
-#_(def waypoint-path [{:latitude 1.0 :longitude 2.0}
-                    {:latitude 3.0 :longitude 4.0}])
-
 (defn transmit-waypoints [serial waypoint-path]
   (loader/transmit serial "start")
   (doseq [value (map str (flatten (map vals waypoint-path)))]
     (loader/transmit serial value))
   (loader/transmit serial "finish"))
-
-
-;(transmit-waypoints serial waypoint-path)
 
 (declare stop-scan start-scan)
 
