@@ -38,7 +38,7 @@
     (try
       (do (write-connection connection body)
           (read-connection connection))
-      (catch Exception ex ex)
+      (catch Exception ex [(.getResponseCode connection) (str ex)])
       (finally
         (.disconnect connection)))))
 
