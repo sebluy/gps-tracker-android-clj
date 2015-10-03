@@ -10,7 +10,7 @@
   (onCreate
     [this bundle]
     (.superOnCreate this bundle)
-    (state/handle handlers/upload-path this))
+    (state/handle handlers/send-action this))
   (onStart
     [this]
     (.superOnStart this)

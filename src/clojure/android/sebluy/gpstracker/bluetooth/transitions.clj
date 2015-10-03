@@ -1,26 +1,31 @@
 (ns android.sebluy.gpstracker.bluetooth.transitions
   (:require [android.sebluy.gpstracker.path :as path]
-            [android.sebluy.gpstracker.bluetooth.logic :as logic]))
+            [android.sebluy.gpstracker.bluetooth.util :as logic]))
 
-(defn add-path [old-state path]
-  (assoc-in old-state [:paths (path :created-at)] path))
+(defn add-path [state path]
+  (assoc-in state [:paths (path :created-at)] path))
 
-(defn add-value-to-receiving-path [old-state value]
-  (update-in old-state [:bluetooth :values] conj value))
+(defn add-value-to-receiving-path [state value]
+  (update-in state [:bluetooth :values] conj value))
 
-(defn finish-receiving-path [old-state]
-  (-> old-state
-      (add-path (path/make-new (path/parse-path (get-in old-state [:bluetooth :values]))))
-      (update :bluetooth #(-> % (dissoc :values) (assoc :status :success)))))
+(defn finish-receiving-path [state]
+  (let [path-values (get-in state [:bluetooth :values])]
+    (-> state
+        (add-path (path/make-new (path/parse-path path-values)))
+        (update :bluetooth
+                (fn [bluetooth]
+                  (-> bluetooth
+                      (dissoc :values)
+                      (assoc :status :success)))))))
 
-(defn receive-path-value [old-state value]
-  (let [intermediate (add-value-to-receiving-path old-state value)]
+(defn receive-path-value [state value]
+  (let [intermediate (add-value-to-receiving-path state value)]
     (if (= value "finish")
       (finish-receiving-path intermediate)
       intermediate)))
 
-(defn start-receiving-path [old-state device-name]
-  (update old-state :bluetooth
+(defn start-receiving-path [state device-name]
+  (update state :bluetooth
           (fn [bluetooth]
             (-> bluetooth
                 (assoc :status :receiving
@@ -28,12 +33,12 @@
                        :values [])
                 (dissoc :scanner)))))
 
-(defn add-device [old-state device]
+(defn add-device [state device]
   (let [key (logic/device-key device)]
-    (assoc-in old-state [:bluetooth :devices key] device)))
+    (assoc-in state [:bluetooth :devices key] device)))
 
-(defn stop-scan [old-state]
-  (update old-state :bluetooth
+(defn stop-scan [state]
+  (update state :bluetooth
           (fn [bluetooth]
             (-> bluetooth
                 (dissoc :scanner)

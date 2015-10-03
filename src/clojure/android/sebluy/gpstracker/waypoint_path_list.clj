@@ -2,7 +2,6 @@
   (:require [neko.activity :as activity]
             [neko.threading :as threading]
             [neko.find-view :as find-view]
-            [neko.ui.menu :as menu]
             [android.sebluy.gpstracker.state :as state]
             [android.sebluy.gpstracker.util :as util])
   (:import [android.widget ArrayAdapter
@@ -11,13 +10,17 @@
            [java.util List]
            [android.content Context]))
 
+(defn receive-waypoints [activity state]
+  (util/start-activity activity '.RemoteActivity)
+  (assoc-in state [:remote :action] :get-waypoint-paths))
+
 (defn render-ui [activity]
   (threading/on-ui
     (activity/set-content-view!
       activity
       [:linear-layout {}
        [:button {:text "Refresh"
-                 :on-click (fn [_] )}]
+                 :on-click (fn [_] (state/handle receive-waypoints activity))}]
        [:list-view {:id ::list-view}]])))
 
 (defn make-list-click-listener [activity]

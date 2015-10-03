@@ -17,12 +17,7 @@
         (.addFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)
         (.clearFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)))))
 
-(defn get-bluetooth-adapter [^Activity activity]
-  (.. activity (getSystemService Context/BLUETOOTH_SERVICE) getAdapter))
 
-(defn bluetooth-enabled? [activity]
-  (let [^BluetoothAdapter bluetooth-adapter (get-bluetooth-adapter activity)]
-    (and (some? bluetooth-adapter) (.isEnabled bluetooth-adapter))))
 
 (defn network-available? [^Activity activity]
   (let [connectivity (.getSystemService activity Context/CONNECTIVITY_SERVICE)

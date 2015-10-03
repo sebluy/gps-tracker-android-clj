@@ -6,6 +6,7 @@
             [android.sebluy.gpstracker.path-list]
             [android.sebluy.gpstracker.show-path]
             [android.sebluy.gpstracker.util :as util]
+            [android.sebluy.gpstracker.bluetooth.util :as bluetooth-util]
             [neko.threading :as threading])
   (:import [android.content Intent]
            [android.bluetooth BluetoothAdapter]
@@ -29,8 +30,8 @@
        [:button
         {:text     "Recieve Path"
          :on-click (fn [_]
-                     (if (util/bluetooth-enabled? activity)
-                       (util/start-activity activity '.ReceivePathActivity)
+                     (if (bluetooth-util/bluetooth-enabled? activity)
+                       (util/start-activity activity '.ReceiveActivity)
                        (.startActivityForResult activity (Intent. BluetoothAdapter/ACTION_REQUEST_ENABLE) 0)))}]])))
 
 (activity/defactivity

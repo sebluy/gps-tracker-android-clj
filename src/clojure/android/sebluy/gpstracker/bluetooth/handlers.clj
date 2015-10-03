@@ -26,13 +26,14 @@
     (loader/transmit serial value))
   (loader/transmit serial "finish"))
 
-(defn add-device [activity device old-state]
-  (doto (transitions/add-device old-state device)
+(defn add-device [activity device state]
+  (doto (transitions/add-device state device)
     (update-ui activity)))
 
 ; stop scan may be handled after scan has already been stopped (sent by scanning timeout),
 ; thus check status and ignore unless scanning
 (defn stop-scan [activity state]
+  ; maybe add some sort of preconditions helper if this kind of checking becomes ubiquitous and tedious
   (if (= (get-in state [:bluetooth :status]) :scanning)
     (do (scanner/stop-scan (util/bluetooth-adapter activity) (get-in state [:bluetooth :scanner]))
         (doto (transitions/stop-scan state)
@@ -43,25 +44,26 @@
   (let [adapter (util/bluetooth-adapter activity)
         devices (util/bonded-devices adapter)
         scanner (scanner/start-scan adapter (fn [device] (state/handle add-device activity device)))]
+    ; maybe just thread/sleep instead of using ui thread
     (.postDelayed (Handler.) (state/handle stop-scan activity) 5000)
     (doto (transitions/start-scan state devices scanner)
       (update-ui activity))))
 
-(defn receive-path-value [activity value old-state]
-  (doto (transitions/receive-path-value old-state value)
+(defn receive-path-value [activity value state]
+  (doto (transitions/receive-path-value state value)
     (update-ui activity)))
 
-(defn start-receiving-path [activity device-index old-state]
-  (let [devices (get-in old-state [:bluetooth :devices])
+(defn start-receiving-path [activity device-index state]
+  (let [devices (get-in state [:bluetooth :devices])
         device (-> devices (vals) (nth device-index))
-        scanner (get-in old-state [:bluetooth :scanner])
+        scanner (get-in state [:bluetooth :scanner])
         device-name (.getName ^BluetoothDevice device)]
     (when scanner
       (scanner/stop-scan (util/bluetooth-adapter activity) scanner))
     (loader/new-serial-bluetooth
       activity device identity
       (fn [value] (state/handle receive-path-value activity value)))
-    (doto (transitions/start-receiving-path old-state device-name)
+    (doto (transitions/start-receiving-path state device-name)
       (update-ui activity))))
 
 ;;;; UI ;;;;;

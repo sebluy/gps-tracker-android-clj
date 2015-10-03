@@ -16,5 +16,5 @@
   (.. activity (getSystemService Context/BLUETOOTH_SERVICE) getAdapter))
 
 (defn bluetooth-enabled? [activity]
-  (let [^BluetoothAdapter bluetooth-adapter (get-bluetooth-adapter activity)]
+  (let [^BluetoothAdapter bluetooth-adapter (bluetooth-adapter activity)]
     (and (some? bluetooth-adapter) (.isEnabled bluetooth-adapter))))
