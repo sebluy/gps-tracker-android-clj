@@ -1,62 +1,68 @@
-(ns android.sebluy.gpstracker.receive
-  (:require [neko.activity :as activity]
-            [neko.threading :as threading]
-            [android.sebluy.gpstracker.util :as util]
-            [android.sebluy.gpstracker.bluetooth-scanner :as scanner]
-            [android.sebluy.gpstracker.bluetooth-loader :as loader]
-            [neko.find-view :as find-view]
+(ns android.sebluy.gpstracker.bluetooth.handlers
+  (:require [android.sebluy.gpstracker.bluetooth.scanner :as scanner]
+            [android.sebluy.gpstracker.bluetooth.loader :as loader]
+            [android.sebluy.gpstracker.bluetooth.transitions :as transitions]
+            [android.sebluy.gpstracker.bluetooth.util :as util]
             [android.sebluy.gpstracker.state :as state]
-            [android.sebluy.gpstracker.path :as path])
+            [neko.activity :as activity]
+            [neko.threading :as threading]
+            [neko.find-view :as find-view])
   (:import [android.bluetooth BluetoothDevice]
-           [android.os Handler]))
+           [android.os Handler]
+           [java.util List]
+           [android.content Context]
+           [android R$layout]
+           [android.widget ArrayAdapter
+                           ListView
+                           AdapterView$OnItemClickListener]))
 
 (declare update-ui)
 
 ;;;;; Handlers ;;;;;
-(defn receive-value [activity value state]
-  ;;; move this to transitions
-  (let [new-state
-        (let [appended-state (update-in state [:bluetooth :values] conj value)]
-          (if (= value "finish")
-            (-> appended-state
-                (add-path (path/make-new (path/parse-path (get-in appended-state [:bluetooth :values]))))
-                (update :bluetooth #(-> % (dissoc :values) (assoc :status :success))))
-            appended-state))]
-    (update-ui activity new-state)
-    new-state))
 
-(defn start-receiving-path [activity device-index state]
-  (let [device (-> state (get-in [:bluetooth :devices]) vals (nth device-index))
-        device-name (.getName ^BluetoothDevice device)]
-    (stop-scan activity)
-    (loader/new-serial-bluetooth
-      activity device identity
-      (fn [value] (state/handle receive-value activity value)))
-    (render-ui activity (loading-ui device-name) identity)
-    (update state :bluetooth assoc
-            :status :receiving
-            :device device-name
-            :values [])))
+#_(defn transmit-waypoints [serial waypoint-path]
+  (loader/transmit serial "start")
+  (doseq [value (map str (flatten (map vals waypoint-path)))]
+    (loader/transmit serial value))
+  (loader/transmit serial "finish"))
 
-(defn add-device [activity device state]
-  (let [key (device-key device)]
-    (render-ui activity (scanning-ui activity) (fill-device-list (get-in state [:bluetooth :devices])))
-    (assoc-in state [:bluetooth :devices key] device)))
+(defn add-device [activity device old-state]
+  (doto (transitions/add-device old-state device)
+    (update-ui activity)))
+
+; stop scan may be handled after scan has already been stopped (sent by scanning timeout),
+; thus check status and ignore unless scanning
+(defn stop-scan [activity state]
+  (if (= (get-in state [:bluetooth :status]) :scanning)
+    (do (scanner/stop-scan (util/bluetooth-adapter activity) (get-in state [:bluetooth :scanner]))
+        (doto (transitions/stop-scan state)
+          (update-ui activity)))
+    state))
 
 (defn start-scan [activity state]
-  (let [adapter (util/get-bluetooth-adapter activity)
-        devices (get-bonded-devices adapter)
+  (let [adapter (util/bluetooth-adapter activity)
+        devices (util/bonded-devices adapter)
         scanner (scanner/start-scan adapter (fn [device] (state/handle add-device activity device)))]
-    (render-ui activity (scanning-ui activity) (fill-device-list devices))
     (.postDelayed (Handler.) (state/handle stop-scan activity) 5000)
-    (update state :bluetooth assoc :scanner scanner :status :scanning :devices devices)))
+    (doto (transitions/start-scan state devices scanner)
+      (update-ui activity))))
 
-(defn stop-scan [activity state]
-  (if (= get-in state [:bluetooth :status] :scanning)
-    (do (scanner/stop-scan (util/get-bluetooth-adapter activity) (get-in state [:bluetooth :scanner]))
-        (render-ui activity (idle-scan-ui activity) (fill-device-list (state :devices)))
-        (update state :bluetooth #(-> % (dissoc :scanner) (assoc :status :idling))))
-    state))
+(defn receive-path-value [activity value old-state]
+  (doto (transitions/receive-path-value old-state value)
+    (update-ui activity)))
+
+(defn start-receiving-path [activity device-index old-state]
+  (let [devices (get-in old-state [:bluetooth :devices])
+        device (-> devices (vals) (nth device-index))
+        scanner (get-in old-state [:bluetooth :scanner])
+        device-name (.getName ^BluetoothDevice device)]
+    (when scanner
+      (scanner/stop-scan (util/bluetooth-adapter activity) scanner))
+    (loader/new-serial-bluetooth
+      activity device identity
+      (fn [value] (state/handle receive-path-value activity value)))
+    (doto (transitions/start-receiving-path old-state device-name)
+      (update-ui activity))))
 
 ;;;; UI ;;;;;
 
@@ -100,7 +106,7 @@
                                             ^List (or (keys devices) ["No devices"])))
       (.setOnItemClickListener list-view (make-list-click-listener activity)))))
 
-(defn update-ui [activity state]
+(defn update-ui [state activity]
   (condp = (get-in state [:bluetooth :status])
     :receiving (render-ui activity (loading-ui (get-in state [:bluetooth :device])) identity)
     :idling (render-ui activity (idle-scan-ui activity) (fill-device-list (get-in state [:bluetooth :devices])))

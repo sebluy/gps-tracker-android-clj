@@ -1,4 +1,4 @@
-(ns android.sebluy.gpstracker.bluetooth-loader
+(ns android.sebluy.gpstracker.bluetooth.loader
   (:import [android.bluetooth BluetoothGattCallback
                               BluetoothProfile
                               BluetoothGattDescriptor]

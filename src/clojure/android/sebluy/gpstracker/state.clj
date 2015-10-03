@@ -1,7 +1,7 @@
 (ns android.sebluy.gpstracker.state)
 
-(def state (atom {}))
+(def state (agent {}))
 
 (defn handle [handler-fn & args]
-  (swap! state (apply partial handler-fn args)))
+  (send state (apply partial handler-fn args)))
 

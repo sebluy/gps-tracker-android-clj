@@ -1,4 +1,4 @@
-(ns android.sebluy.gpstracker.bluetooth-scanner
+(ns android.sebluy.gpstracker.bluetooth.scanner
   (:import [android.bluetooth BluetoothAdapter$LeScanCallback]))
 
 (defn make-scan-callback [on-device-found]
