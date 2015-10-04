@@ -3,7 +3,8 @@
             [neko.threading :as threading]
             [neko.find-view :as find-view]
             [android.sebluy.gpstracker.state :as state]
-            [android.sebluy.gpstracker.util :as util])
+            [android.sebluy.gpstracker.util :as util]
+            [android.sebluy.gpstracker.path :as path])
   (:import [android.widget ArrayAdapter
                            AdapterView$OnItemClickListener ListView]
            [android R$layout]
@@ -26,8 +27,8 @@
 (defn make-list-click-listener [activity]
   (reify AdapterView$OnItemClickListener
     (onItemClick [_ _ _ position _]
-      (swap! state/state assoc :show-waypoint-path (-> @state/state :waypoint-paths vals (nth position)))
-      (util/start-activity activity '.ShowWaypointPathActivity))))
+      #_(swap! state/state assoc :show-waypoint-path (-> @state/state :waypoint-paths vals (nth position)))
+      #_(util/start-activity activity '.ShowWaypointPathActivity))))
 
 (activity/defactivity
   android.sebluy.gpstracker.WaypointPathListActivity

@@ -1,5 +1,6 @@
 (ns android.sebluy.gpstracker.remote.transitions
-  (:require [android.sebluy.gpstracker.state :as state]))
+  (:require [android.sebluy.gpstracker.state :as state]
+            [clojure.edn :as edn]))
 
 (declare update-ui)
 
@@ -9,7 +10,7 @@
 
 (defmethod action-transition :get-waypoint-paths [_ response-body state]
   ; move to some kind of "global" transition collection
-  (assoc state :waypoint-paths response-body))
+  (assoc state :waypoint-paths (first (edn/read-string response-body))))
 
 (defmethod action-transition :default [_ _ state]
   state)
