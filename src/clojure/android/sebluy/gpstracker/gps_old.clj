@@ -1,4 +1,4 @@
-(ns android.sebluy.gpstracker.gps
+(comment (ns android.sebluy.gpstracker.gps-old
   (:require [clojure.core.async :as async])
   (:import [com.google.android.gms.common.api GoogleApiClient$Builder
                                               GoogleApiClient$ConnectionCallbacks
@@ -102,5 +102,5 @@
             (async/put! status-chan :disconnected)
             (recur :disconnected))
         (recur state)))
-    [status-chan control-chan location-chan]))
+    [status-chan control-chan location-chan])))
 

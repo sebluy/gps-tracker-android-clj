@@ -1,4 +1,5 @@
-(ns android.sebluy.gpstracker.tracking
+(comment
+  (ns android.sebluy.gpstracker.tracking
   (:require [neko.activity :as activity]
             [neko.threading :as threading]
             [clojure.core.async :as async]
@@ -80,5 +81,5 @@
     [this]
     (.superOnStop this)
     (async/put! (get-chan this :control) :stop)
-    (util/keep-screen-on this false)))
+    (util/keep-screen-on this false))))
 

@@ -7,11 +7,7 @@
                 (select-keys point #{:latitude :longitude :speed :accuracy})))
          (into []))]])
 
-(defmulti build-action (fn [state] (get-in state [:remote :action])))
+(defn request->action [request]
+  (condp = request
+    :get-waypoint-paths [[:get-waypoint-paths]]))
 
-(defmethod build-action :upload-path [state]
-  (let [path (get-in state [:remote :path])]
-    (path->action path)))
-
-(defmethod build-action :get-waypoint-paths [_]
-  [[:get-waypoint-paths]])

@@ -1,4 +1,4 @@
-(ns android.sebluy.gpstracker.waypoint-path-list
+(ns android.sebluy.gpstracker.waypoint-path-list.waypoint-path-list-old
   (:require [neko.activity :as activity]
             [neko.threading :as threading]
             [neko.find-view :as find-view]

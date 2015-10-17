@@ -16,7 +16,6 @@
 
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
                  [neko/neko "4.0.0-alpha3"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [com.google.android.gms/play-services-location "7.8.0" :extension "aar"]]
   ; comment out play-services-location and refresh in cursive to avoid maven error
 

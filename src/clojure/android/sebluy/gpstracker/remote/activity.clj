@@ -1,4 +1,4 @@
-(ns android.sebluy.gpstracker.remote.activity
+(comment (ns android.sebluy.gpstracker.remote.activity
   (:require [android.sebluy.gpstracker.state :as state]
             [android.sebluy.gpstracker.remote.handlers :as handlers]
             [neko.activity :as activity]
@@ -21,7 +21,6 @@
     (util/keep-screen-on this false))
   (onBackPressed
     [this]
-    (.superOnBackPressed this)
-    (state/handle handlers/exit-remote-activity)))
+    (state/handle handlers/exit-remote-activity))))
 
 

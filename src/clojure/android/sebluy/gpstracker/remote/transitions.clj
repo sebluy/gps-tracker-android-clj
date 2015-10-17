@@ -1,29 +1,35 @@
 (ns android.sebluy.gpstracker.remote.transitions
-  (:require [android.sebluy.gpstracker.state :as state]
-            [clojure.edn :as edn]))
+  (:require [clojure.edn :as edn]
+            [android.sebluy.gpstracker.common.transitions :as common-transitions]))
 
-(declare update-ui)
+(defmulti request-transition (fn [action _ _] action))
 
-;;;;; Handlers ;;;;;
-
-(defmulti action-transition (fn [action _ _] action))
-
-(defmethod action-transition :get-waypoint-paths [_ response-body state]
+(defmethod request-transition :get-waypoint-paths [_ response-body state]
   ; move to some kind of "global" transition collection
   (assoc state :waypoint-paths (first (edn/read-string response-body))))
 
-(defmethod action-transition :default [_ _ state]
+(defmethod request-transition :default [_ _ state]
   state)
+
+(defn update-request [state request]
+  (assoc-in state [:remote :request] request))
 
 (defn update-status [state status]
   (assoc-in state [:remote :status] status))
 
+(defn update-request-and-status [state sent? request]
+  (-> state
+      (update-request request)
+      (update-status (if sent? :pending :disconnected))))
+
+(defn send-request [state sent? request]
+  (-> state
+      (common-transitions/navigate :remote)
+      (update-request-and-status sent? request)))
+
 (defn receive-response [state [response-code response-body]]
   (if (= response-code 200)
-    (let [action (get-in state [:remote :action])]
-      (-> (action-transition action response-body state) (update-status :success)))
+    (let [request (get-in state [:remote :request])]
+      (-> (request-transition request response-body state) (update-status :success)))
     (update-status state :failure)))
-
-(defn clear-remote [state]
-  (dissoc state :remote))
 
