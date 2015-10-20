@@ -9,7 +9,8 @@
 ; reset state for debugging
 ;(restart-agent state/state {})
 ;(state/handle transitions/initialize (neko.debug/*a :main))
-(@state/state :history)
+(state/handle (fn [state] (assoc state :page {:id :main})))
+(identity @state/state)
 
 ;; add watch to state that updates ui on change
 (activity/defactivity

@@ -6,7 +6,8 @@
             [android.sebluy.gpstracker.remote.ui :as remote-ui]
             [neko.ui.mapping :as mapping]
             [neko.threading :as threading]
-            [neko.activity :as activity])
+            [neko.activity :as activity]
+            [clojure.string :as string])
   (:import [android.widget TableLayout
                            TableRow]))
 
@@ -53,12 +54,21 @@
   :classname TableRow
   :inherits :view)
 
-(defn table-row [title value]
+(defn table-row [value]
   [:table-row {}
-   [:text-view {:text (str title)}]
-   [:text-view {:text (str value)}]])
+   [:text-view {:text value}]])
+
+(defn keyword->title [keyword]
+  (-> :total-distance
+      (name)
+      (string/split #"-")
+      (->> (map string/capitalize)
+           (string/join " "))))
+
+(defn readable-attribute [[key value]]
+  [(keyword->title key) (str value)])
 
 (defn table [attributes]
   (into [:table-layout {}]
-        (map (partial apply table-row)
-             attributes)))
+        (map table-row
+             (mapcat readable-attribute attributes))))
