@@ -4,8 +4,7 @@
   (:import [android.app Activity]
            [android.view WindowManager$LayoutParams]
            [android.content Context]
-           [android.net ConnectivityManager]
-           [android.bluetooth BluetoothAdapter]))
+           [android.net ConnectivityManager]))
 
 (defn start-activity [^Activity old-activity new-activity]
   (.startActivity old-activity (intent/intent old-activity new-activity {})))
@@ -17,12 +16,10 @@
         (.addFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)
         (.clearFlags window WindowManager$LayoutParams/FLAG_KEEP_SCREEN_ON)))))
 
-
-
 (defn network-available? [^Activity activity]
   (let [connectivity (.getSystemService activity Context/CONNECTIVITY_SERVICE)
         network-info (.getActiveNetworkInfo ^ConnectivityManager connectivity)]
-    (and network-info (.isConnected network-info))))
+    (boolean (and network-info (.isConnected network-info)))))
 
 (defn dissoc-in [map path]
   (condp = (count path)
@@ -34,4 +31,3 @@
       (if (empty? dissociated)
         (dissoc-in map sub-path)
         (assoc-in map sub-path dissociated)))))
-

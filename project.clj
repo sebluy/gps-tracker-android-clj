@@ -16,7 +16,7 @@
 
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
                  [neko/neko "4.0.0-alpha3"]
-                 [com.google.android.gms/play-services-location "7.8.0" :extension "aar"]]
+                 [com.google.android.gms/play-services-location "8.1.0" :extension "aar"]]
   ; comment out play-services-location and refresh in cursive to avoid maven error
 
   :profiles {:default [:dev]
@@ -45,18 +45,9 @@
             ;; Try increasing this value if dexer fails with
             ;; OutOfMemoryException. Set the value according to your
             ;; available RAM.
-            :dex-opts       ["-JXmx4096M" "--incremental"]
+            :dex-opts       ["-JXmx2G" "--incremental"]
 
             ;; If previous option didn't work, uncomment this as well.
             ;; :force-dex-optimize true
-
-            :target-version "19"
-            :aot-exclude-ns ["cljs.core.async.macros"
-                             "cljs.core.async.impl.ioc-macros"
-                             "clojure.parallel" "clojure.core.reducers"
-                             "cljs-tooling.complete" "cljs-tooling.info"
-                             "cljs-tooling.util.analysis" "cljs-tooling.util.misc"
-                             "cider.nrepl" "cider-nrepl.plugin"
-                             "cider.nrepl.middleware.util.java.parser"]})
-
-
+            :aot-exclude-ns ["clojure.parallel"
+                             "clojure.core.reducers"]})

@@ -6,6 +6,11 @@
             [android.sebluy.gpstracker.main.transitions :as transitions]
             [android.sebluy.gpstracker.state :as state]))
 
+; reset state for debugging
+;(restart-agent state/state {})
+;(state/handle transitions/initialize (neko.debug/*a :main))
+(@state/state :history)
+
 ;; add watch to state that updates ui on change
 (activity/defactivity
   android.sebluy.gpstracker.MainActivity
@@ -18,5 +23,3 @@
   (onBackPressed
     [this]
     (state/handle handlers/back)))
-
-

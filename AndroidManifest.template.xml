@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.sebluy.gpstracker"
-          android:versionCode="{{version-code}}"
+          <!-- use 1 because version-code was bugging out -->
+          android:versionCode="1"
           android:versionName="{{version-name}}" >
 
   <uses-sdk android:minSdkVersion="19" />

@@ -7,11 +7,8 @@
 (defn create-history [state]
   (assoc state :history '()))
 
-(defn initialize [state activity]
-  (-> state
-      (common-transitions/set-page :main)
+(defn initialize [_ activity]
+  (-> {}
+      (common-transitions/set-page {:id :main})
       (create-history)
       (stash-activity activity)))
-
-
-

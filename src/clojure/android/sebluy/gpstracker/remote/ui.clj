@@ -21,7 +21,7 @@
              :on-click (fn [_] (state/handle handlers/retry-request))}]])
 
 (defn ui [state]
-  (let [status (get-in state [:remote :status])]
+  (let [status (get-in state [:page :status])]
     (condp = status
       :success success-ui
       :failure (failure-ui "Upload Failed")

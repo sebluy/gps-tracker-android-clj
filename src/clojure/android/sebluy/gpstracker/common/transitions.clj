@@ -20,5 +20,3 @@
         (set-page last-page)
         (pop-history))
     state))
-
-
