@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.sebluy.gpstracker"
-          <!-- use 1 because version-code was bugging out -->
           android:versionCode="1"
           android:versionName="{{version-name}}" >
 

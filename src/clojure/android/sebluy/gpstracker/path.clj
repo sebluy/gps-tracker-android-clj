@@ -36,7 +36,7 @@
        (reduce +)))
 
 ; might not need
-#_(defn add-point [path point]
+(defn add-point [path point]
   (-> path
       (update :points conj point)
       (update :speed-acum + (or (point :speed) 0.0))

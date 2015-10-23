@@ -1,6 +1,9 @@
-(ns android.sebluy.gpstracker.debug
-  (:require [android.sebluy.gpstracker.state :as state]))
+(ns android.sebluy.gpstracker.debug)
+
+(def log (atom '()))
 
 (defn push [value]
-  (swap! state/state update :debug conj value))
+  (swap! log conj value))
 
+(defn clear []
+  (reset! log '()))

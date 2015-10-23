@@ -4,3 +4,8 @@
 - rename from android.sebluy to sebluy.android
 - use type hints instead of reflection
 - use storage for cross session path retention
+- create schema for state (and other stuff)
+- better error handling (show what went wrong for debugging purpose)
+  toast on error
+  lookup in map somewhere
+

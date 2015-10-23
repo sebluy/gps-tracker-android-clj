@@ -12,12 +12,11 @@
   :plugins [[lein-droid "0.4.1"]]
 
   ; neko 4.0.0-alpha4 wont compile
-  ; problem with usb connection? crashes on disconnect/reconnect when repl is active
 
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
                  [neko/neko "4.0.0-alpha3"]
-                 [com.google.android.gms/play-services-location "8.1.0" :extension "aar"]]
-  ; comment out play-services-location and refresh in cursive to avoid maven error
+                 [com.google.android.gms/play-services-location "8.1.0" :extension "aar"]
+                 [prismatic/schema "1.0.1"]]
 
   :profiles {:default [:dev]
 
@@ -49,5 +48,6 @@
 
             ;; If previous option didn't work, uncomment this as well.
             ;; :force-dex-optimize true
-            :aot-exclude-ns ["clojure.parallel"
+            :aot-exclude-ns [#"schema.*"
+                             "clojure.parallel"
                              "clojure.core.reducers"]})

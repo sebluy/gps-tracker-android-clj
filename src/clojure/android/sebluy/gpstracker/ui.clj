@@ -1,6 +1,5 @@
 (ns android.sebluy.gpstracker.ui
-  (:require [android.sebluy.gpstracker.state :as state]
-            [android.sebluy.gpstracker.main.ui :as main-ui]
+  (:require [android.sebluy.gpstracker.main.ui :as main-ui]
             [android.sebluy.gpstracker.waypoint-path-list.ui :as waypoint-path-list-ui]
             [android.sebluy.gpstracker.show-waypoint-path.ui :as show-waypoint-path]
             [android.sebluy.gpstracker.remote.ui :as remote-ui]
@@ -38,37 +37,3 @@
     (threading/on-ui
       (activity/set-content-view! activity (ui new-state))
       (fill new-state activity))))
-
-; add "observer" to render on state change
-(add-watch state/state :ui render-ui)
-
-; utils (add to different namespace?)
-
-(mapping/defelement
-  :table-layout
-  :classname TableLayout
-  :inherits :view-group)
-
-(mapping/defelement
-  :table-row
-  :classname TableRow
-  :inherits :view)
-
-(defn table-row [value]
-  [:table-row {}
-   [:text-view {:text value}]])
-
-(defn keyword->title [keyword]
-  (-> :total-distance
-      (name)
-      (string/split #"-")
-      (->> (map string/capitalize)
-           (string/join " "))))
-
-(defn readable-attribute [[key value]]
-  [(keyword->title key) (str value)])
-
-(defn table [attributes]
-  (into [:table-layout {}]
-        (map table-row
-             (mapcat readable-attribute attributes))))
