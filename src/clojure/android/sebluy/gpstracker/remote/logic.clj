@@ -10,4 +10,3 @@
 (defn request->action [request]
   (condp = request
     :get-waypoint-paths [[:get-waypoint-paths]]))
-

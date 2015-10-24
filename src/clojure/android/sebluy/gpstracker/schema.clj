@@ -42,18 +42,20 @@
  RemotePage Page [:remote] {:request Request :status Status})
 
 (abstract-map/extend-schema
- PathListPage Page [:path-list] {:path-type PathType})
+ PathListPage Page [:waypoint-path-list] {})
 
 (abstract-map/extend-schema
- ShowPathPage Page [:path] {:path-type PathType :path-id s/Int})
+ ShowPathPage Page [:show-waypoint-path] {:path-id s/Int})
 
 ;;;; Top Level State
 
 ; Todo: add list and activity validator
 
-(s/defschema State {:page Page
-                    :history s/Any
-                    :activity s/Any
-                    (s/optional-key :waypoint-paths) [WaypointPath]})
+(s/defschema State (s/if empty?
+                     {}
+                     {:page Page
+                      :history s/Any
+                      :activity s/Any
+                      (s/optional-key :waypoint-paths) [WaypointPath]}))
 
 (def validator (s/validator State))

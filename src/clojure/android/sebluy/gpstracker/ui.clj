@@ -3,6 +3,7 @@
             [android.sebluy.gpstracker.waypoint-path-list.ui :as waypoint-path-list-ui]
             [android.sebluy.gpstracker.show-waypoint-path.ui :as show-waypoint-path]
             [android.sebluy.gpstracker.remote.ui :as remote-ui]
+            [android.sebluy.gpstracker.state :as state]
             [neko.ui.mapping :as mapping]
             [neko.threading :as threading]
             [neko.activity :as activity]
@@ -37,3 +38,6 @@
     (threading/on-ui
       (activity/set-content-view! activity (ui new-state))
       (fill new-state activity))))
+
+; render ui on state changes
+(add-watch state/state :ui render-ui)
