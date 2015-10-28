@@ -9,7 +9,7 @@
   (let [network? (util/network-available? (state :activity))]
     (when network?
       (future
-        (let [response-attrs (-> request (logic/request->action) (pr-str) (http/post))]
+        (let [response-attrs (-> [request] (pr-str) (http/post))]
           (state/handle transitions/receive-response response-attrs))))
     (transitions/send-request state network? request)))
 

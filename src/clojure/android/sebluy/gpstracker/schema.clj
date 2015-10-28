@@ -1,31 +1,7 @@
 (ns android.sebluy.gpstracker.schema
-  (:require [schema.core :as s]
+  (:require [gps-tracker-common.schema :as ct]
+            [schema.core :as s]
             [schema.experimental.abstract-map :as abstract-map]))
-
-(s/defschema PathType (s/enum :tracking :waypoint))
-
-;;;; Points
-
-(s/defschema Point
-  (abstract-map/abstract-map-schema :type {:latitude s/Num :longitude s/Num}))
-
-(abstract-map/extend-schema
- Waypoint Point [:waypoint] {})
-
-(abstract-map/extend-schema
- TrackingPoint Point [:tracking]
- {(s/optional-key :speed) s/Num (s/optional-key :accuracy) s/Num})
-
-;;;; Paths
-
-(s/defschema Path
-  (abstract-map/abstract-map-schema :type {:id s/Int}))
-
-(abstract-map/extend-schema
- TrackingPath Path [:tracking] {:points [TrackingPoint]})
-
-(abstract-map/extend-schema
- WaypointPath Path [:waypoint] {:points [Waypoint]})
 
 ;;;; Pages
 
@@ -36,16 +12,15 @@
  MainPage Page [:main] {})
 
 (s/defschema Status (s/enum :pending :success :failure :disconnected))
-(s/defschema Request (s/enum :get-waypoint-paths))
 
 (abstract-map/extend-schema
- RemotePage Page [:remote] {:request Request :status Status})
+ RemotePage Page [:remote] {:request s/Any :status Status})
 
 (abstract-map/extend-schema
  PathListPage Page [:waypoint-path-list] {})
 
 (abstract-map/extend-schema
- ShowPathPage Page [:show-waypoint-path] {:path-id s/Int})
+ ShowPathPage Page [:show-waypoint-path] {:path-id ct/Date})
 
 ;;;; Top Level State
 
@@ -56,6 +31,6 @@
                      {:page Page
                       :history s/Any
                       :activity s/Any
-                      (s/optional-key :waypoint-paths) [WaypointPath]}))
+                      (s/optional-key :waypoint-paths) [ct/WaypointPath]}))
 
 (def validator (s/validator State))

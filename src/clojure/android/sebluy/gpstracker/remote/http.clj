@@ -3,6 +3,8 @@
            [java.io BufferedOutputStream BufferedReader InputStreamReader]
            [java.net HttpURLConnection]))
 
+;; maybe replace with http://loopj.com/android-async-http/
+
 (def api-endpoint "https://fierce-dawn-3931.herokuapp.com/api")
 
 (defn- write-connection [connection ^String body]
@@ -41,4 +43,3 @@
       (catch Exception ex [(.getResponseCode connection) (str ex)])
       (finally
         (.disconnect connection)))))
-

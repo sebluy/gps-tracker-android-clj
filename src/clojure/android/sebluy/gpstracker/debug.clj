@@ -8,5 +8,4 @@
 (defn clear []
   (reset! log '()))
 
-; for debuggin purposes
-(-> @log first ex-data :value :waypoint-paths)
+(-> @log first ex-data :value)

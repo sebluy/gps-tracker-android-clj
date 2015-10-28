@@ -17,20 +17,10 @@
                               (b :latitude) (b :longitude) results)
     (aget results 0)))
 
-(defn total-distance [path]
+(defn total-distance [{:keys [points]}]
   "returns total distance in meters of path, where straight line segments
    are used between points"
-  (first
-   (reduce (fn [[sum last-point] next-point]
-             (let [new-sum (+ sum (distance-between last-point next-point))]
-               [new-sum next-point]))
-           [0 (first path)]
-           (rest path))))
-
-(defn total-distance [path]
-  "returns total distance in meters of path, where straight line segments
-   are used between points"
-  (->> path
+  (->> points
        (partition 2 1)
        (map distance-between)
        (reduce +)))

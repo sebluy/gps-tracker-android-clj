@@ -16,6 +16,7 @@
   :dependencies [[org.clojure-android/clojure "1.7.0-RC1" :use-resources true]
                  [neko/neko "4.0.0-alpha3"]
                  [com.google.android.gms/play-services-location "8.1.0" :extension "aar"]
+                 [sebluy/gps-tracker-common "0.1.0"]
                  [prismatic/schema "1.0.1"]]
 
   :profiles {:default [:dev]

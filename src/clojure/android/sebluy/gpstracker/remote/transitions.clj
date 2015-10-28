@@ -2,9 +2,9 @@
   (:require [clojure.edn :as edn]
             [android.sebluy.gpstracker.common.transitions :as common-transitions]))
 
-(defmulti request-transition (fn [action _ _] action))
+(defmulti request-transition (fn [request _ _] (request :action)))
 
-(defmethod request-transition :get-waypoint-paths [_ response-body state]
+(defmethod request-transition :get-paths [_ response-body state]
   (assoc state :waypoint-paths (first (edn/read-string response-body))))
 
 (defmethod request-transition :default [_ _ state]

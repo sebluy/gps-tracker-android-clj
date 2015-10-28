@@ -12,22 +12,25 @@
   [:linear-layout {:orientation :vertical}
    [:button
     {:text     "Refresh"
-     :on-click (fn [_] (state/handle remote-handlers/send-request :get-waypoint-paths))}]
+     :on-click
+     (fn [_]
+       (state/handle
+        remote-handlers/send-request
+        {:action :get-paths :path-type :waypoint}))}]
    [:list-view {:id ::list-view}]])
 
 (defn list-click-listener [paths]
   (reify AdapterView$OnItemClickListener
     (onItemClick [_ _ _ position _]
       (state/handle common-transitions/navigate {:id :show-waypoint-path
-                                                 :path (nth paths position)}))))
+                                                 :path-id ((nth paths position) :id)}))))
 
 (defn fill [state activity]
   (let [[^ListView list-view] (find-view/find-views activity ::list-view)
-        path-map (state :waypoint-paths)
-        path-ids (or (keys path-map) [])
-        path-values (vals path-map)]
+        paths (state :waypoint-paths)
+        path-ids (or (mapv :id paths) [])]
     (doto list-view
       (.setAdapter (ArrayAdapter. ^Context activity
                                   ^int R$layout/simple_list_item_1
                                   ^List path-ids))
-      (.setOnItemClickListener (list-click-listener path-values)))))
+      (.setOnItemClickListener (list-click-listener paths)))))

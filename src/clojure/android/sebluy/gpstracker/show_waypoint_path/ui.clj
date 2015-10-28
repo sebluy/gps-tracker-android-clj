@@ -3,6 +3,11 @@
             [android.sebluy.gpstracker.ui-utils :as ui-utils]))
 
 (defn ui [state]
-  (let [path (get-in state [:page :path])]
+  (let [path-id (get-in state [:page :path-id])
+        ;; this code is used in browser client as well, refactor to common
+        path (->> (get-in state [:waypoint-paths])
+                  (filter (fn [path] (= (path :id) path-id)))
+                  first)]
     [:linear-layout {:orientation :vertical}
-     (ui-utils/table (path/waypoint-attributes path))]))
+     (ui-utils/table (path/waypoint-attributes path))
+     [:button {:text "Send to Arduino"}]]))
