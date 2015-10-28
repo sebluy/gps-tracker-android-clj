@@ -1,5 +1,7 @@
 (ns android.sebluy.gpstracker.show-waypoint-path.ui
   (:require [android.sebluy.gpstracker.path :as path]
+            [android.sebluy.gpstracker.bluetooth.handlers :as bluetooth-handlers]
+            [android.sebluy.gpstracker.state :as state]
             [android.sebluy.gpstracker.ui-utils :as ui-utils]))
 
 (defn ui [state]
@@ -10,4 +12,7 @@
                   first)]
     [:linear-layout {:orientation :vertical}
      (ui-utils/table (path/waypoint-attributes path))
-     [:button {:text "Send to Arduino"}]]))
+     [:button {:text "Send to Arduino"
+               :on-click
+               (fn [_]
+                 (state/handle bluetooth-handlers/send-waypoint path))}]]))

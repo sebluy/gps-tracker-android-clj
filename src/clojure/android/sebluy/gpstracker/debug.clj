@@ -7,5 +7,3 @@
 
 (defn clear []
   (reset! log '()))
-
-(-> @log first ex-data :value)

@@ -10,7 +10,7 @@
    (notify/toast "Invalid State... Check debug log"))
   (debug/push exception))
 
-;(set-validator! state schema/validator)
+;;(set-validator! state schema/validator)
 
 ; don't reload or activity will be lost and ui will still
 ; be attached to old state
@@ -27,5 +27,3 @@
   (send state (fn [state]
                 (debug/push state)
                 (apply handler-fn state args))))
-
-(-> @state)

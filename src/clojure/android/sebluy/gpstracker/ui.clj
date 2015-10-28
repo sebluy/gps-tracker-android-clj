@@ -23,13 +23,15 @@
     :main (main-ui/ui state)
     :waypoint-path-list waypoint-path-list-ui/ui
     :show-waypoint-path (show-waypoint-path/ui state)
+    :bluetooth (bluetooth/ui state)
     :remote (remote-ui/ui state)
     default-ui))
 
-(defn fill [state activity]
+(defn fill [state]
   "after initial state render, fill in ui with extras (populate lists...)"
   (condp = (get-in state [:page :id])
-    :waypoint-path-list (waypoint-path-list-ui/fill state activity)
+    :waypoint-path-list (waypoint-path-list-ui/fill state)
+    :bluetooth (bluetooth-ui/fill state)
     identity))
 
 (defn render-ui [_ _ _ new-state]
@@ -37,7 +39,7 @@
   (when-let [activity (new-state :activity)]
     (threading/on-ui
       (activity/set-content-view! activity (ui new-state))
-      (fill new-state activity))))
+      (fill new-state))))
 
 ; render ui on state changes
 (add-watch state/state :ui render-ui)
