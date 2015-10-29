@@ -8,26 +8,30 @@
   (:import [android.bluetooth BluetoothDevice]
            [android.os Handler]))
 
-(defn start-loading [{{loader :loader {path :path} :request} :page :as state}]
+(defn start-loading [{{loader :loader write-queue :write-queue} :page :as state}]
   ;; maybe make this async because it might block thread
-  (android.sebluy.gpstracker.debug/push :loading)
-  (loader/transmit loader "start")
-  (doseq [value (map str (flatten (map vals (path :points))))]
-    (Thread/sleep 100)
-    (loader/transmit loader value))
-  (loader/transmit loader "finish")
-  (loader/disconnect loader)
-  (update state :page (fn [page] (-> page
-                                     (dissoc :loader)
-                                     (assoc :status :finished)))))
+  (if (empty? write-queue)
+    (do
+      (loader/disconnect loader)
+      (update state :page (fn [page] (-> page
+                                         (dissoc :loader)
+                                         (dissoc :write-queue)
+                                         (assoc :status :finished)))))
+    (do
+      (loader/transmit loader (first write-queue))
+      (update-in state [:page :write-queue] (fn [queue] (drop 1 queue))))))
 
-(-> @state/state :page :request :path)
-
-(defn connect [{:keys [activity] :as state} device]
+(defn connect [{activity :activity {{path :path} :request} :page :as state} device]
   ;; no on receive yet
-  (android.sebluy.gpstracker.debug/push :connecting)
-  (let [loader (loader/connect activity device (fn [gatt] (state/handle start-loading)) identity)]
-    (update state :page assoc :loader loader :status :pending :device device)))
+  (let [loader (loader/connect activity device
+                               (fn [gatt] (state/handle start-loading))
+                               (fn [] (state/handle start-loading))
+                               identity)]
+    (update state :page assoc
+            :loader loader
+            :status :pending
+            :device device
+            :write-queue (flatten ["start" (->> path :points (map vals) flatten (map str)) "finish"]))))
 
 ; stop scan may be handled after scan has already been stopped (sent by scanning timeout),
 ; thus check status and ignore unless scanning

@@ -27,6 +27,7 @@
                                   :request s/Any
                                   :adapter s/Any
                                   :devices s/Any
+                                  (s/optional-key :write-queue) s/Any
                                   (s/optional-key :device) s/Any
                                   (s/optional-key :loader) s/Any
                                   (s/optional-key :scanner) s/Any})

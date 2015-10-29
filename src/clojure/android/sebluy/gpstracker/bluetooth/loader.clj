@@ -16,29 +16,24 @@
     (.setValue descriptor BluetoothGattDescriptor/ENABLE_NOTIFICATION_VALUE)
     (.writeDescriptor gatt descriptor)))
 
-(defn make-gatt-callback [on-connect on-receive]
+(defn make-gatt-callback [on-connect on-write on-receive]
   (proxy [BluetoothGattCallback] []
     (onConnectionStateChange
       [gatt status new-state]
-      (android.sebluy.gpstracker.debug/push :state-changed)
-      (proxy-super onConnectionStateChange gatt status new-state)
       (when (= new-state BluetoothProfile/STATE_CONNECTED)
-        (android.sebluy.gpstracker.debug/push :connected)
         (.discoverServices gatt)))
-    (onServicesDiscovered
-      [gatt status]
-      (proxy-super onServicesDiscovered gatt status)
-      (android.sebluy.gpstracker.debug/push :services-discovered)
+    (onServicesDiscovered [gatt status]
       (on-connect gatt)
       (enable-tx-notifications gatt))
+    (onCharacteristicWrite [gatt characteristic status]
+      (on-write))
     (onCharacteristicChanged
       [gatt characteristic]
-      (proxy-super onCharacteristicChanged gatt characteristic)
       (let [value (String. (.getValue characteristic) "UTF-8")]
         (on-receive value)))))
 
-(defn connect [activity device on-connect on-receive]
-  (let [gatt (.connectGatt device activity false (make-gatt-callback on-connect on-receive))]
+(defn connect [activity device on-connect on-write on-receive]
+  (let [gatt (.connectGatt device activity false (make-gatt-callback on-connect on-write on-receive))]
     (.discoverServices gatt)
     gatt))
 

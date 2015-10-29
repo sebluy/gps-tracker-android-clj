@@ -7,6 +7,3 @@
 
 (defn clear []
   (reset! log '()))
-
-(-> @log (nth 4))
-(clear)
