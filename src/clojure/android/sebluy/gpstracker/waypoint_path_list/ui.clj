@@ -25,9 +25,8 @@
       (state/handle common-transitions/navigate {:id :show-waypoint-path
                                                  :path-id ((nth paths position) :id)}))))
 
-(defn fill [state activity]
+(defn fill [{activity :activity paths :waypoint-paths}]
   (let [[^ListView list-view] (find-view/find-views activity ::list-view)
-        paths (state :waypoint-paths)
         path-ids (or (mapv :id paths) [])]
     (doto list-view
       (.setAdapter (ArrayAdapter. ^Context activity

@@ -1,5 +1,6 @@
 (ns android.sebluy.gpstracker.bluetooth.transitions
   (:require [android.sebluy.gpstracker.path :as path]
+            [android.sebluy.gpstracker.common.transitions :as common-transitions]
             [android.sebluy.gpstracker.bluetooth.util :as util]))
 
 (defn add-path [state path]
@@ -35,17 +36,17 @@
 
 (defn add-device [state device]
   (let [key (util/device-key device)]
-    (assoc-in state [:bluetooth :devices key] device)))
+    (assoc-in state [:page :devices key] device)))
 
 (defn stop-scan [state]
-  (update state :bluetooth
-          (fn [bluetooth]
-            (-> bluetooth
+  (update state :page
+          (fn [page]
+            (-> page
                 (dissoc :scanner)
                 (assoc :status :idling)))))
 
-(defn start-scan [state devices scanner]
-  (update state :bluetooth assoc
-          :scanner scanner
-          :status :scanning
-          :devices devices))
+(defn start-scan [state bluetooth-map]
+  (update state :page merge bluetooth-map {:status :scanning}))
+
+(defn initialize [state bluetooth-map]
+  (common-transitions/navigate state (merge {:id :bluetooth} bluetooth-map)))

@@ -15,4 +15,5 @@
      [:button {:text "Send to Arduino"
                :on-click
                (fn [_]
-                 (state/handle bluetooth-handlers/send-waypoint path))}]]))
+                 (state/handle bluetooth-handlers/initialize
+                               {:action :send-waypoint :path path}))}]]))

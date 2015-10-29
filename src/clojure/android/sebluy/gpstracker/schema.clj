@@ -23,7 +23,13 @@
  ShowPathPage Page [:show-waypoint-path] {:path-id ct/Date})
 
 (abstract-map/extend-schema
- BluetoothPage Page [:bluetooth] {})
+ BluetoothPage Page [:bluetooth] {:status s/Keyword
+                                  :request s/Any
+                                  :adapter s/Any
+                                  :devices s/Any
+                                  (s/optional-key :device) s/Any
+                                  (s/optional-key :loader) s/Any
+                                  (s/optional-key :scanner) s/Any})
 
 ;;;; Top Level State
 
@@ -34,7 +40,6 @@
                      {:page Page
                       :history s/Any
                       :activity s/Any
-                      (s/optional-key :bluetooth) s/Any
                       (s/optional-key :waypoint-paths) [ct/WaypointPath]}))
 
 (def validator (s/validator State))

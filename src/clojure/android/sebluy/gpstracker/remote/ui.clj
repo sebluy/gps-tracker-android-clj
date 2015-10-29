@@ -5,7 +5,7 @@
 (def pending-ui
   [:linear-layout
    {:orientation :vertical}
-   [:text-view {:text "Uploading..."}]
+   [:text-view {:text "Pending..."}]
    [:progress-bar {}]])
 
 (def success-ui
