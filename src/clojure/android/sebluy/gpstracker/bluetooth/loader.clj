@@ -1,4 +1,5 @@
 (ns android.sebluy.gpstracker.bluetooth.loader
+  (:require [android.sebluy.gpstracker.debug :as debug])
   (:import [android.bluetooth BluetoothGattCallback
                               BluetoothProfile
                               BluetoothGattDescriptor]
@@ -9,7 +10,8 @@
 (def TX_CHARA_UUID (UUID/fromString "6e400003-b5a3-f393-e0a9-e50e24dcca9e"))
 (def RX_CHARA_UUID (UUID/fromString "6e400002-b5a3-f393-e0a9-e50e24dcca9e"))
 
-(defn enable-tx-notifications [gatt]
+;; seems to be causing bugs with write
+#_(defn enable-tx-notifications [gatt]
   (let [tx (.. gatt (getService RX_SERVICE_UUID) (getCharacteristic TX_CHARA_UUID))
         _ (.setCharacteristicNotification gatt tx true)
         descriptor (.getDescriptor tx CCCD)]
@@ -20,15 +22,23 @@
   (proxy [BluetoothGattCallback] []
     (onConnectionStateChange
       [gatt status new-state]
+      (debug/push {:callback :onConnectionStateChanged
+                 :status status
+                 :new-state new-state})
       (when (= new-state BluetoothProfile/STATE_CONNECTED)
         (.discoverServices gatt)))
     (onServicesDiscovered [gatt status]
+      (debug/push {:callback :onServicesDiscovered
+                 :status status})
       (on-connect gatt)
-      (enable-tx-notifications gatt))
+      #_(enable-tx-notifications gatt))
     (onCharacteristicWrite [gatt characteristic status]
+      (debug/push {:callback :onCharacteristicWrite
+                 :status status})
       (on-write))
     (onCharacteristicChanged
       [gatt characteristic]
+      (debug/push {:callback :onCharacteristicChanged})
       (let [value (String. (.getValue characteristic) "UTF-8")]
         (on-receive value)))))
 
@@ -45,4 +55,5 @@
   (let [rx-service (.getService gatt RX_SERVICE_UUID)
         characteristic (.getCharacteristic rx-service RX_CHARA_UUID)]
     (.setValue characteristic value)
-    (.writeCharacteristic gatt characteristic)))
+    (let [written? (.writeCharacteristic gatt characteristic)]
+      (debug/push {:action :transmit :written? written? :value value}))))
