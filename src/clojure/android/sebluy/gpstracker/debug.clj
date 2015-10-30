@@ -8,4 +8,4 @@
 (defn clear []
   (reset! log '()))
 
-;;(-> @log (nth 1))
+;(-> @log (nth 1))

@@ -21,6 +21,9 @@
       (loader/transmit loader (first write-queue))
       (update-in state [:page :write-queue] (fn [queue] (drop 1 queue))))))
 
+(defn serialize-path [{:keys [points]}]
+  (cons (-> points count str) (->> points (map vals) flatten (map str))))
+
 (defn connect [{activity :activity {{path :path} :request} :page :as state} device]
   ;; no on receive yet
   (let [loader (loader/connect activity device
@@ -31,7 +34,7 @@
             :loader loader
             :status :pending
             :device device
-            :write-queue (flatten ["start" (->> path :points (map vals) flatten (map str)) "finish"]))))
+            :write-queue (serialize-path path))))
 
 ; stop scan may be handled after scan has already been stopped (sent by scanning timeout),
 ; thus check status and ignore unless scanning
