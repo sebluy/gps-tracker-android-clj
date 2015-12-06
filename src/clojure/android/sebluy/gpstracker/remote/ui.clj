@@ -4,18 +4,21 @@
 
 (def pending-ui
   [:linear-layout
-   {:orientation :vertical}
+   {:orientation :vertical
+    :gravity :center}
    [:text-view {:text "Pending..."}]
    [:progress-bar {}]])
 
 (def success-ui
   [:linear-layout
-   {:orientation :vertical}
-   [:text-view {:text "Upload succeded"}]])
+   {:orientation :vertical
+    :gravity :center}
+   [:text-view {:text "Success"}]])
 
 (defn failure-ui [msg]
   [:linear-layout
-   {:orientation :vertical}
+   {:orientation :vertical
+    :gravity :center}
    [:text-view {:text msg}]
    [:button {:text     "Retry"
              :on-click (fn [_] (state/handle handlers/retry-request))}]])

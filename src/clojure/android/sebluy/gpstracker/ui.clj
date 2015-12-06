@@ -17,19 +17,20 @@
    [:text-view
     {:text "Nothing's here..."}]])
 
+
 (defn ui [state]
-  "given a state returns a data structure representing
-   the ui"
+  "Given a state returns a data structure representing
+   the UI"
   (condp = (get-in state [:page :id])
     :main (main-ui/ui state)
-    :waypoint-path-list waypoint-path-list-ui/ui
+    :waypoint-path-list (waypoint-path-list-ui/ui state)
     :show-waypoint-path (show-waypoint-path-ui/ui state)
     :bluetooth (bluetooth-ui/ui state)
     :remote (remote-ui/ui state)
     default-ui))
 
 (defn fill [state]
-  "after initial state render, fill in ui with extras (populate lists...)"
+  "After initial state render, fill in ui with extras (populate lists...)"
   (condp = (get-in state [:page :id])
     :waypoint-path-list (waypoint-path-list-ui/fill state)
     :bluetooth (bluetooth-ui/fill state)

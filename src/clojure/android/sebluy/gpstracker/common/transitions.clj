@@ -32,6 +32,6 @@
 
 (defn initialize [state activity]
   (-> state
-      (set-page {:id :main})
+      (set-page {:id :waypoint-path-list})
       (create-history)
       (stash-activity activity)))
