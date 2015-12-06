@@ -8,6 +8,17 @@
   (:import [android.bluetooth BluetoothDevice]
            [android.os Handler]))
 
+(abstract-map/extend-schema
+ BluetoothPage Page [:bluetooth] {:status s/Keyword
+                                  :request s/Any
+                                  :adapter s/Any
+                                  :devices s/Any
+                                  (s/optional-key :write-queue) s/Any
+                                  (s/optional-key :device) s/Any
+                                  (s/optional-key :loader) s/Any
+                                  (s/optional-key :scanner) s/Any})
+
+
 (defn start-loading [{{loader :loader write-queue :write-queue} :page :as state}]
   "If there is data in write queue, send it and dequeue it."
   (if (seq write-queue)
@@ -91,7 +102,6 @@
                                      :adapter adapter
                                      :devices {}}))))
 
-
 #_(defn start-receiving-path [state device-index]
   (let [activity (state :activity)
         devices (get-in state [:bluetooth :devices])
@@ -104,3 +114,10 @@
       activity device identity
       (fn [value] (state/handle transitions/receive-path-value value)))
     (transitions/start-receiving-path state device-name)))
+
+(defn cleanup [{page :page :as state}]
+  "Called to clean up bluetooth state."
+  (when-let [loader (page :loader)]
+    (loader/disconnect loader))
+  (when-let [scanner (page :scanner)]
+    (stop-scan state)))

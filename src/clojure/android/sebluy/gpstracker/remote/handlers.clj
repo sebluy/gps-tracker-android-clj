@@ -15,6 +15,5 @@
            (state/handle transitions/receive-response response-attrs))))
      (transitions/send-request state network? request first?))))
 
-;; fix retry so it doesn't navigate to :remote page multiple times
 (defn retry-request [state]
   (send-request state (get-in state [:page :request]) false))
