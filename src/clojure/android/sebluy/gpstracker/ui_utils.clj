@@ -14,12 +14,15 @@
   :classname TableRow
   :inherits :view)
 
-(defn table-row [value]
+(defn table-row [[key value]]
   [:table-row {}
-   [:text-view {:text value}]])
+   [:text-view {:text key
+                :padding 10}]
+   [:text-view {:text value
+                :padding 10}]])
 
 (defn keyword->title [keyword]
-  (-> :total-distance
+  (-> keyword
       (name)
       (string/split #"-")
       (->> (map string/capitalize)
@@ -31,4 +34,4 @@
 (defn table [attributes]
   (into [:table-layout {}]
         (map table-row
-             (mapcat readable-attribute attributes))))
+             (map readable-attribute attributes))))

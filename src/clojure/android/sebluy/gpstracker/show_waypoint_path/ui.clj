@@ -10,9 +10,12 @@
         path (->> (get-in state [:waypoint-paths])
                   (filter (fn [path] (= (path :id) path-id)))
                   first)]
-    [:linear-layout {:orientation :vertical}
+    [:linear-layout {:orientation :vertical
+                     :gravity :center}
      (ui-utils/table (path/waypoint-attributes path))
      [:button {:text "Send to Arduino"
+               :padding 30
+               :layout-margin 50
                :on-click
                (fn [_]
                  (state/handle bluetooth-handlers/initialize

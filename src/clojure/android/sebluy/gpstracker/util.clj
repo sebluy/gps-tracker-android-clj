@@ -4,7 +4,8 @@
   (:import [android.app Activity]
            [android.view WindowManager$LayoutParams]
            [android.content Context]
-           [android.net ConnectivityManager]))
+           [android.net ConnectivityManager]
+           [java.text SimpleDateFormat]))
 
 (defn start-activity [^Activity old-activity new-activity]
   (.startActivity old-activity (intent/intent old-activity new-activity {})))
@@ -31,3 +32,6 @@
       (if (empty? dissociated)
         (dissoc-in map sub-path)
         (assoc-in map sub-path dissociated)))))
+
+(defn date->string [date]
+  (.format (SimpleDateFormat.) date))

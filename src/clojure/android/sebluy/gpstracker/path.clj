@@ -1,4 +1,5 @@
 (ns android.sebluy.gpstracker.path
+  (:require [android.sebluy.gpstracker.util :as util])
   (:import [android.location Location]
            [java.util Date]))
 
@@ -73,7 +74,9 @@
         (partition 3 3 nil (map #(Double/valueOf %) (pop (into [] (rest raw-path))))))))
 
 (defn waypoint-attributes [path]
-  {:total-distance (format "%.2fm"(total-distance path))})
+  {:created (util/date->string (path :id))
+   :distance (format "%.2fm"(total-distance path))
+   :count (count (path :points))})
 
 (defn attributes [path]
   {:current-speed  (current-speed path)

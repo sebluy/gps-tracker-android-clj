@@ -2,11 +2,11 @@
   (:require [android.sebluy.gpstracker.state :as state]
             [android.sebluy.gpstracker.remote.handlers :as remote-handlers]
             [android.sebluy.gpstracker.common.transitions :as common-transitions]
+            [android.sebluy.gpstracker.util :as util]
             [neko.find-view :as find-view])
   (:import [android.widget AdapterView$OnItemClickListener ArrayAdapter ListView]
            [android.content Context]
            [java.util List]
-           [java.text SimpleDateFormat]
            [android R$layout]))
 
 (defn ui [{waypoint-paths :waypoint-paths}]
@@ -32,13 +32,10 @@
       (state/handle common-transitions/navigate {:id :show-waypoint-path
                                                  :path-id ((nth paths position) :id)}))))
 
-(defn date->string [date]
-  (.format (SimpleDateFormat.) date))
-
 (defn paths->showable-list [paths]
   "Given a vector of waypoint paths, returns a vector of strings
    identifying each path."
-  (mapv (fn [path] (-> path :id date->string))
+  (mapv (fn [path] (-> path :id util/date->string))
             paths))
 
 (defn fill [{activity :activity paths :waypoint-paths}]
