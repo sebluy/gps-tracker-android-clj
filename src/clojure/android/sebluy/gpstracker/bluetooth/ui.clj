@@ -2,6 +2,7 @@
   (:require [android.sebluy.gpstracker.bluetooth.handlers :as handlers]
             [android.sebluy.gpstracker.bluetooth.util :as util]
             [android.sebluy.gpstracker.state :as state]
+            [clojure.string :as s]
             [neko.find-view :as find-view])
   (:import [java.util List]
            [android.content Context]
@@ -35,9 +36,12 @@
    [:text-view {:text (str "Pending..." (util/device-key device))}]
    [:progress-bar {}]])
 
-(def finished-ui
+(defn stringify [keyword]
+  (-> keyword name s/capitalize))
+
+(defn finished-ui [result]
   [:linear-layout {}
-   [:text-view {:text "Success"}]])
+   [:text-view {:text (stringify result)}]])
 
 (defn ui [{{:keys [status device]} :page}]
   (condp = status
@@ -45,7 +49,8 @@
     :scanning scanning-ui
     :idling idling-ui
     :pending (pending-ui device)
-    :finished finished-ui))
+    :success (finished-ui status)
+    :failure (finished-ui status)))
 
 ;; this list code is most likely reusable (path list)
 (defn make-list-click-listener [devices]

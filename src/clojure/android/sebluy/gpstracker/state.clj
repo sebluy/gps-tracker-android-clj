@@ -24,6 +24,7 @@
    as the first argument. new state will be result of
    (handler-fn state args)"
   ;; remove this in production
+  (debug/push @state)
+  (debug/push handler-fn)
   (send state (fn [state]
-                (debug/push state)
                 (apply handler-fn state args))))

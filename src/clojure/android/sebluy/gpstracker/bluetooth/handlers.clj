@@ -9,27 +9,36 @@
            [android.os Handler]))
 
 (defn start-loading [{{loader :loader write-queue :write-queue} :page :as state}]
-  ;; maybe make this async because it might block thread
-  (if (empty? write-queue)
-    (do
-      (loader/disconnect loader)
-      (update state :page (fn [page] (-> page
-                                         (dissoc :loader)
-                                         (dissoc :write-queue)
-                                         (assoc :status :finished)))))
-    (do
-      (loader/transmit loader (first write-queue))
-      (update-in state [:page :write-queue] (fn [queue] (drop 1 queue))))))
+  "If there is data in write queue, send it and dequeue it."
+  (if (seq write-queue)
+    (do (loader/transmit loader (first write-queue))
+        (update-in state [:page :write-queue] (fn [queue] (drop 1 queue))))
+    state))
 
 (defn serialize-path [{:keys [points]}]
+  "Create a list of strings starting with waypoint count followed by each
+   waypoint field in format '(count lat-1 lng-1 lat-2 lng-2 ...).
+   e.g. '(3 1.034 2.199 1.035 2.200 3.994 5.947) with each value as a string."
   (cons (-> points count str) (->> points (map vals) flatten (map str))))
+
+(defn disconnect [{{write-queue :write-queue} :page :as state}]
+  "Cleans up connection state and records the result of the connection.
+   If the write queue is empty on disconnect, then the connection succeeded.
+   Otherwise it failed.
+   The other end (arduino) should disconnect when it has received all packets."
+  (let [result (if (empty? write-queue) :success :failure)]
+    (update state :page (fn [page] (-> page
+                                       (dissoc :loader)
+                                       (dissoc :write-queue)
+                                       (assoc :status result))))))
 
 (defn connect [{activity :activity {{path :path} :request} :page :as state} device]
   ;; no on receive yet
   (let [loader (loader/connect activity device
                                (fn [gatt] (state/handle start-loading))
                                (fn [] (state/handle start-loading))
-                               identity)]
+                               identity
+                               (fn [] (state/handle disconnect)))]
     (update state :page assoc
             :loader loader
             :status :pending

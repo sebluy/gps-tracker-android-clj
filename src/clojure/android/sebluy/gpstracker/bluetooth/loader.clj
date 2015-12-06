@@ -18,7 +18,8 @@
     (.setValue descriptor BluetoothGattDescriptor/ENABLE_NOTIFICATION_VALUE)
     (.writeDescriptor gatt descriptor)))
 
-(defn make-gatt-callback [on-connect on-write on-receive]
+;; rewrite this to take a protocol
+(defn make-gatt-callback [on-connect on-write on-receive on-disconnect]
   (proxy [BluetoothGattCallback] []
     (onConnectionStateChange
       [gatt status new-state]
@@ -26,7 +27,9 @@
                  :status status
                  :new-state new-state})
       (when (= new-state BluetoothProfile/STATE_CONNECTED)
-        (.discoverServices gatt)))
+        (.discoverServices gatt))
+      (when (= new-state BluetoothProfile/STATE_DISCONNECTED)
+        (on-disconnect)))
     (onServicesDiscovered [gatt status]
       (debug/push {:callback :onServicesDiscovered
                  :status status})
@@ -42,8 +45,8 @@
       (let [value (String. (.getValue characteristic) "UTF-8")]
         (on-receive value)))))
 
-(defn connect [activity device on-connect on-write on-receive]
-  (let [gatt (.connectGatt device activity false (make-gatt-callback on-connect on-write on-receive))]
+(defn connect [activity device on-connect on-write on-receive on-disconnect]
+  (let [gatt (.connectGatt device activity false (make-gatt-callback on-connect on-write on-receive on-disconnect))]
     (.discoverServices gatt)
     gatt))
 
