@@ -21,9 +21,14 @@
       (update-request request)
       (update-status (if sent? :pending :disconnected))))
 
-(defn send-request [state sent? request]
+(defn navigate-on-first [state first?]
+  (if first?
+    (common-transitions/navigate state {:id :remote})
+    state))
+
+(defn send-request [state sent? request first?]
   (-> state
-      (common-transitions/navigate {:id :remote})
+      (navigate-on-first first?)
       (update-request-and-status sent? request)))
 
 (defn receive-response [state [response-code response-body]]

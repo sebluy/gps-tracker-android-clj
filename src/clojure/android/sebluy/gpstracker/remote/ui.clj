@@ -2,31 +2,30 @@
   (:require [android.sebluy.gpstracker.state :as state]
             [android.sebluy.gpstracker.remote.handlers :as handlers]))
 
+(defn layout [contents]
+  (into
+   [:linear-layout
+    {:orientation :vertical
+     :gravity :center}]
+   contents))
+
 (def pending-ui
-  [:linear-layout
-   {:orientation :vertical
-    :gravity :center}
-   [:text-view {:text "Pending..."}]
+  [[:text-view {:text "Pending..."}]
    [:progress-bar {}]])
 
 (def success-ui
-  [:linear-layout
-   {:orientation :vertical
-    :gravity :center}
-   [:text-view {:text "Success"}]])
+  [[:text-view {:text "Success"}]])
 
 (defn failure-ui [msg]
-  [:linear-layout
-   {:orientation :vertical
-    :gravity :center}
-   [:text-view {:text msg}]
-   [:button {:text     "Retry"
+  [[:text-view {:text msg}]
+   [:button {:text "Retry"
              :on-click (fn [_] (state/handle handlers/retry-request))}]])
 
 (defn ui [state]
   (let [status (get-in state [:page :status])]
-    (condp = status
-      :success success-ui
-      :failure (failure-ui "Upload Failed")
-      :pending pending-ui
-      :disconnected (failure-ui "Network Disconnected"))))
+    (layout
+     (condp = status
+       :success success-ui
+       :failure (failure-ui "Upload Failed")
+       :pending pending-ui
+       :disconnected (failure-ui "Network Disconnected")))))

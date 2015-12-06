@@ -5,14 +5,16 @@
             [android.sebluy.gpstracker.remote.logic :as logic]
             [android.sebluy.gpstracker.util :as util]))
 
-(defn send-request [state request]
-  (let [network? (util/network-available? (state :activity))]
-    (when network?
-      (future
-        (let [response-attrs (-> [request] (pr-str) (http/post))]
-          (state/handle transitions/receive-response response-attrs))))
-    (transitions/send-request state network? request)))
+(defn send-request
+  ([state request] (send-request state request true))
+  ([state request first?]
+   (let [network? (util/network-available? (state :activity))]
+     (when network?
+       (future
+         (let [response-attrs (-> [request] (pr-str) (http/post))]
+           (state/handle transitions/receive-response response-attrs))))
+     (transitions/send-request state network? request first?))))
 
 ;; fix retry so it doesn't navigate to :remote page multiple times
 (defn retry-request [state]
-  (send-request state (get-in state [:page :request])))
+  (send-request state (get-in state [:page :request]) false))
