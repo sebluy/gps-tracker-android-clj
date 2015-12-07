@@ -20,11 +20,10 @@
       (set-page page)))
 
 (defn back [state]
-  (if-let [last-page (first (state :history))]
-    (-> state
-        (set-page last-page)
-        (pop-history))
-    state))
+  (let [last-page (first (state :history))]
+    (cond-> state
+      last-page (-> (set-page last-page)
+                    (pop-history)))))
 
 ;;;; initialization
 (defn stash-activity [state activity]

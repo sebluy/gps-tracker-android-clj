@@ -32,13 +32,14 @@
                                        (dissoc :write-queue)
                                        (assoc :status result))))))
 
+(def loader-callback
+  (reify loader/LoaderCallback
+    (on-connect [_] (state/handle start-loading))
+    (on-write [_] (state/handle start-loading))
+    (on-disconnect [_] (state/handle disconnect))))
+
 (defn connect [{activity :activity {{path :path} :request} :page :as state} device]
-  ;; no on receive yet
-  (let [loader (loader/connect activity device
-                               (fn [gatt] (state/handle start-loading))
-                               (fn [] (state/handle start-loading))
-                               identity
-                               (fn [] (state/handle disconnect)))]
+  (let [loader (loader/connect activity device loader-callback)]
     (update state :page assoc
             :loader loader
             :status :pending
@@ -86,19 +87,6 @@
                                      :status :disconnected
                                      :adapter adapter
                                      :devices {}}))))
-
-#_(defn start-receiving-path [state device-index]
-  (let [activity (state :activity)
-        devices (get-in state [:bluetooth :devices])
-        device (-> devices (vals) (nth device-index))
-        scanner (get-in state [:bluetooth :scanner])
-        device-name (.getName ^BluetoothDevice device)]
-    (when scanner
-      (scanner/stop-scan (util/bluetooth-adapter activity) scanner))
-    (loader/new-serial-bluetooth
-      activity device identity
-      (fn [value] (state/handle transitions/receive-path-value value)))
-    (transitions/start-receiving-path state device-name)))
 
 (defn cleanup [{page :page :as state}]
   "Called to clean up bluetooth state."

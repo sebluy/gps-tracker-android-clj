@@ -4,10 +4,8 @@
             [android.sebluy.gpstracker.remote.ui :as remote-ui]
             [android.sebluy.gpstracker.bluetooth.ui :as bluetooth-ui]
             [android.sebluy.gpstracker.state :as state]
-            [neko.ui.mapping :as mapping]
             [neko.threading :as threading]
-            [neko.activity :as activity]
-            [clojure.string :as string])
+            [neko.activity :as activity])
   (:import [android.widget TableLayout
                            TableRow]))
 
@@ -33,12 +31,13 @@
     :bluetooth (bluetooth-ui/fill state)
     identity))
 
+;; implement "should component update" to avoid re-rendering spinner
 (defn render-ui [_ _ _ new-state]
-  "renders a new ui representing the current state"
+  "Renders a new ui representing the current state."
   (when-let [activity (new-state :activity)]
     (threading/on-ui
-      (activity/set-content-view! activity (ui new-state))
-      (fill new-state))))
+     (activity/set-content-view! activity (ui new-state))
+     (fill new-state))))
 
 ; render ui on state changes
 (add-watch state/state :ui render-ui)

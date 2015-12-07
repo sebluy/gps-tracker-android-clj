@@ -10,8 +10,6 @@
    (notify/toast "Invalid State... Check debug log"))
   (debug/push exception))
 
-;;(set-validator! state schema/validator)
-
 ; don't reload or activity will be lost and ui will still
 ; be attached to old state
 ; state is nil until activity is created
@@ -20,8 +18,8 @@
                       :error-handler handle-error))
 
 (defn handle [handler-fn & args]
-  "calls handler-fn on state agent with the current value of state
-   as the first argument. new state will be result of
+  "Calls handler-fn on state agent with the current value of state
+   as the first argument. New state will be result of
    (handler-fn state args)"
   ;; remove this in production
   (debug/push @state)

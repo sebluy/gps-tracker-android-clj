@@ -11,14 +11,16 @@
                            ListView
                            AdapterView$OnItemClickListener]))
 
-(def scanning-ui
+(defn scanning-ui [{{devices :devices} :page}]
   [:linear-layout {:orientation :vertical
                    :gravity :center-horizontal}
    [:text-view {:text "Scanning..."
                 :layout-margin-top 50}]
    [:progress-bar {}]
-   [:list-view {:id ::list-view
-                :layout-margin 50}]])
+   (if (seq devices)
+     [:list-view {:id ::list-view
+                  :layout-margin 50}]
+     [:text-view {:text "No devices"}])])
 
 (def disconnected-ui
   [:linear-layout {:orientation :vertical
@@ -42,27 +44,26 @@
   [:linear-layout {:gravity :center}
    [:text-view {:text (stringify result)}]])
 
-(defn ui [{{:keys [status device]} :page}]
+(defn ui [{{:keys [status device]} :page :as state}]
   (condp = status
     :disconnected disconnected-ui
-    :scanning scanning-ui
+    :scanning (scanning-ui state)
     :pending (pending-ui device)
     :success (finished-ui status)
     :failure (finished-ui status)))
 
-;; this list code is most likely reusable (path list)
 (defn make-list-click-listener [devices]
   (reify AdapterView$OnItemClickListener
     (onItemClick [_ _ _ device-index _]
-      ;; what to do on click? multi-method dispatch on request?
       (state/handle handlers/stop-scan-and-connect (nth (vals devices) device-index)))))
 
 (defn fill-device-list [devices activity]
   (let [[^ListView list-view] (find-view/find-views activity ::list-view)]
-    (.setAdapter list-view (ArrayAdapter. ^Context activity ^int R$layout/simple_list_item_1
-                                          ^List (or (keys devices) ["No devices"])))
+    (.setAdapter list-view (ArrayAdapter. ^Context activity
+                                          ^int R$layout/simple_list_item_1
+                                          ^List (keys devices)))
     (.setOnItemClickListener list-view (make-list-click-listener devices))))
 
 (defn fill [{{:keys [status devices]} :page activity :activity}]
-  (if (#{:idling :scanning} status)
+  (if (and (seq devices) (= status :scanning))
     (fill-device-list devices activity)))
