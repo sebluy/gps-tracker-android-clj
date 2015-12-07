@@ -8,17 +8,6 @@
   (:import [android.bluetooth BluetoothDevice]
            [android.os Handler]))
 
-(abstract-map/extend-schema
- BluetoothPage Page [:bluetooth] {:status s/Keyword
-                                  :request s/Any
-                                  :adapter s/Any
-                                  :devices s/Any
-                                  (s/optional-key :write-queue) s/Any
-                                  (s/optional-key :device) s/Any
-                                  (s/optional-key :loader) s/Any
-                                  (s/optional-key :scanner) s/Any})
-
-
 (defn start-loading [{{loader :loader write-queue :write-queue} :page :as state}]
   "If there is data in write queue, send it and dequeue it."
   (if (seq write-queue)
@@ -56,8 +45,6 @@
             :device device
             :write-queue (serialize-path path))))
 
-; stop scan may be handled after scan has already been stopped (sent by scanning timeout),
-; thus check status and ignore unless scanning
 (defn stop-scan [{activity :activity {:keys [id status scanner adapter]} :page :as state}]
   ; maybe add some sort of preconditions helper if this kind of checking becomes ubiquitous and tedious
   (if (and (= id :bluetooth) (= status :scanning))
@@ -73,8 +60,6 @@
 ;; helper, not handler maybe move to "side effects" namespace
 (defn start-scan [adapter]
   (let [scanner (scanner/start-scan adapter (fn [device] (state/handle transitions/add-device device)))]
-    ;; maybe use ui thread instead of creating a new thread
-    (future (Thread/sleep 5000) (state/handle stop-scan))
     scanner))
 
 (defn attempt-scan [{{:keys [adapter]} :page :as state}]

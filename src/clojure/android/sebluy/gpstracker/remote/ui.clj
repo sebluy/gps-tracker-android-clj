@@ -19,6 +19,8 @@
 (defn failure-ui [msg]
   [[:text-view {:text msg}]
    [:button {:text "Retry"
+             :layout-margin 50
+             :padding 30
              :on-click (fn [_] (state/handle handlers/retry-request))}]])
 
 (defn ui [state]

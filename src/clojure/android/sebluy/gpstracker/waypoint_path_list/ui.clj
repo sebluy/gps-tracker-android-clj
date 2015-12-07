@@ -13,6 +13,8 @@
   [:linear-layout {:orientation :vertical}
    [:button
     {:text "Refresh"
+     :layout-margin 10
+     :padding 30
      :layout-width :fill-parent
      :on-click
      (fn [_]

@@ -1,6 +1,5 @@
 (ns android.sebluy.gpstracker.ui
-  (:require [android.sebluy.gpstracker.main.ui :as main-ui]
-            [android.sebluy.gpstracker.waypoint-path-list.ui :as waypoint-path-list-ui]
+  (:require [android.sebluy.gpstracker.waypoint-path-list.ui :as waypoint-path-list-ui]
             [android.sebluy.gpstracker.show-waypoint-path.ui :as show-waypoint-path-ui]
             [android.sebluy.gpstracker.remote.ui :as remote-ui]
             [android.sebluy.gpstracker.bluetooth.ui :as bluetooth-ui]
@@ -17,12 +16,10 @@
    [:text-view
     {:text "Nothing's here..."}]])
 
-
 (defn ui [state]
   "Given a state returns a data structure representing
    the UI"
   (condp = (get-in state [:page :id])
-    :main (main-ui/ui state)
     :waypoint-path-list (waypoint-path-list-ui/ui state)
     :show-waypoint-path (show-waypoint-path-ui/ui state)
     :bluetooth (bluetooth-ui/ui state)

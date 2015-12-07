@@ -12,42 +12,40 @@
                            AdapterView$OnItemClickListener]))
 
 (def scanning-ui
-  [:linear-layout {:orientation :vertical}
-   [:text-view {:text "Scanning..."}]
+  [:linear-layout {:orientation :vertical
+                   :gravity :center-horizontal}
+   [:text-view {:text "Scanning..."
+                :layout-margin-top 50}]
    [:progress-bar {}]
-   [:list-view {:id ::list-view}]
-   [:button {:text     "Stop"
-             :on-click (fn [_] (state/handle handlers/stop-scan))}]])
+   [:list-view {:id ::list-view
+                :layout-margin 50}]])
 
 (def disconnected-ui
-  [:linear-layout {:orientation :vertical}
+  [:linear-layout {:orientation :vertical
+                   :gravity :center}
    [:text-view {:text "Bluetooth is disconnected"}]
    [:button {:text     "Retry"
-             :on-click (fn [_] (state/handle handlers/attempt-scan))}]])
-
-(def idling-ui
-  [:linear-layout {:orientation :vertical}
-   [:list-view {:id ::list-view}]
-   [:button {:text     "Start"
+             :padding 30
+             :layout-margin 50
              :on-click (fn [_] (state/handle handlers/attempt-scan))}]])
 
 (defn pending-ui [device]
-  [:linear-layout {:orientation :vertical}
-   [:text-view {:text (str "Pending..." (util/device-key device))}]
+  [:linear-layout {:orientation :vertical
+                   :gravity :center}
+   [:text-view {:text (str "Pending... " (util/device-key device))}]
    [:progress-bar {}]])
 
 (defn stringify [keyword]
   (-> keyword name s/capitalize))
 
 (defn finished-ui [result]
-  [:linear-layout {}
+  [:linear-layout {:gravity :center}
    [:text-view {:text (stringify result)}]])
 
 (defn ui [{{:keys [status device]} :page}]
   (condp = status
     :disconnected disconnected-ui
     :scanning scanning-ui
-    :idling idling-ui
     :pending (pending-ui device)
     :success (finished-ui status)
     :failure (finished-ui status)))
