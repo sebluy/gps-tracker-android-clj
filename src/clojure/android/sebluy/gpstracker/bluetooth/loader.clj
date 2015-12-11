@@ -34,8 +34,16 @@
   (.close gatt)
   (.disconnect gatt))
 
+(defn uart-characteristic [gatt]
+  (some-> gatt
+          (.getService RX_SERVICE_UUID)
+          (.getCharacteristic RX_CHARA_UUID)))
+
 (defn transmit [gatt value]
-  (let [rx-service (.getService gatt RX_SERVICE_UUID)
-        characteristic (.getCharacteristic rx-service RX_CHARA_UUID)]
-    (.setValue characteristic value)
-    (.writeCharacteristic gatt characteristic)))
+  "Attempts to transmit value over gatt connection.
+   Returns true iff transmit initiated successfully."
+  (if-let [characteristic (uart-characteristic gatt)]
+    (do
+      (.setValue characteristic value)
+      (.writeCharacteristic gatt characteristic))
+    false))

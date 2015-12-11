@@ -8,88 +8,84 @@
   (:import [android.bluetooth BluetoothDevice]
            [android.os Handler]))
 
-(defn start-loading [{{loader :loader write-queue :write-queue} :page :as state}]
-  "If there is data in write queue, send it and dequeue it."
-  (if (seq write-queue)
-    (do (loader/transmit loader (first write-queue))
-        (update-in state [:page :write-queue] (fn [queue] (drop 1 queue))))
-    state))
+(declare attempt-scan)
+(declare attempt-write-next)
 
-(defn serialize-path [{:keys [points]}]
-  "Create a list of strings starting with waypoint count followed by each
-   waypoint field in format '(count lat-1 lng-1 lat-2 lng-2 ...).
-   e.g. '(3 1.034 2.199 1.035 2.200 3.994 5.947) with each value as a string."
-  (cons (-> points count str) (->> points (map vals) flatten (map str))))
+;; initialization
 
-(defn disconnect [{{write-queue :write-queue} :page :as state}]
-  "Cleans up connection state and records the result of the connection.
-   If the write queue is empty on disconnect, then the connection succeeded.
-   Otherwise it failed.
-   The other end (arduino) should disconnect when it has received all packets."
-  (let [result (if (empty? write-queue) :success :failure)]
-    (update state :page (fn [page] (-> page
-                                       (dissoc :loader)
-                                       (dissoc :write-queue)
-                                       (assoc :status result))))))
+(defn initialize [{:keys [activity] :as state} request]
+  "Sets up essential bluetooth state and then attempts a scan."
+  (-> state
+      (transitions/initialize
+       {:request request
+        :status :disconnected
+        :adapter (util/bluetooth-adapter activity)
+        :devices {}})
+      (attempt-scan)))
+
+;; scanning
+
+(defn start-scan [state adapter]
+  (let [scanner (scanner/start-scan
+                 adapter
+                 (fn [device] (state/handle transitions/add-device device)))]
+    (transitions/start-scan state scanner)))
+
+(defn attempt-scan [{{:keys [adapter]} :page :as state}]
+  (cond-> state
+    (util/bluetooth-enabled? adapter)
+    (start-scan adapter)))
+
+(defn stop-scan [{activity :activity {:keys [id status scanner adapter]} :page :as state}]
+  (scanner/stop-scan adapter scanner)
+  (transitions/stop-scan state))
+
+;; connecting
 
 (def loader-callback
+  "What to do on loader events"
   (reify loader/LoaderCallback
-    (on-connect [_] (state/handle start-loading))
-    (on-write [_] (state/handle start-loading))
+    (on-connect [_] (state/handle attempt-write-next))
+    (on-write [_] (state/handle attempt-write-next))
     (on-disconnect [_] (state/handle disconnect))))
 
 (defn connect [{activity :activity {{path :path} :request} :page :as state} device]
-  (let [loader (loader/connect activity device loader-callback)]
-    (update state :page assoc
-            :loader loader
-            :status :pending
-            :device device
-            :write-queue (serialize-path path))))
-
-(defn stop-scan [{activity :activity {:keys [id status scanner adapter]} :page :as state}]
-  ; maybe add some sort of preconditions helper if this kind of checking becomes ubiquitous and tedious
-  (if (and (= id :bluetooth) (= status :scanning))
-    (do (scanner/stop-scan adapter scanner)
-        (transitions/stop-scan state))
-    state))
+  "Attempts a connection to device. Write will begin immediately after connection
+   has been established."
+  (let [loader (loader/connect (state :activity) device loader-callback)]
+    (transitions/connect state device loader)))
 
 (defn stop-scan-and-connect [state device]
   (-> state
       (stop-scan)
       (connect device)))
 
-;; helper, not handler maybe move to "side effects" namespace
-(defn start-scan [adapter]
-  (let [scanner (scanner/start-scan adapter (fn [device] (state/handle transitions/add-device device)))]
-    scanner))
+;; loading
 
-(defn attempt-scan [{{:keys [adapter]} :page :as state}]
-  (if (util/bluetooth-enabled? adapter)
-    (let [devices (util/bonded-devices adapter)
-          scanner (start-scan adapter)]
-      (transitions/start-scan state {:scanner scanner :devices devices}))
-      state))
+(defn write [state loader value]
+  (if (loader/transmit loader value)
+    (transitions/pop-write-queue state)
+    (disconnect state)))
 
-;; checks to see if bluetooth is connected
-;; if it is start scanning and set page to scanning
-;; else set state to disconnected
-(defn initialize [{:keys [activity] :as state} request]
-  (let [adapter (util/bluetooth-adapter activity)]
-    (if (util/bluetooth-enabled? adapter)
-      (let [scanner (start-scan adapter)
-            devices (util/bonded-devices adapter)]
-        (transitions/initialize state {:request request
-                                       :status :scanning
-                                       :adapter adapter
-                                       :scanner scanner
-                                       :devices devices}))
-      (transitions/initialize state {:request request
-                                     :status :disconnected
-                                     :adapter adapter
-                                     :devices {}}))))
+(defn attempt-write-next [{{loader :loader write-queue :write-queue} :page :as state}]
+  (cond-> state
+    (seq write-queue) (write loader (first write-queue))))
+
+;; disconnecting
+
+(defn disconnect [state]
+  "Cleans up connection state and records the result of the connection.
+   If the write queue is empty on disconnect, then the connection succeeded.
+   Otherwise it failed.
+   The other end (arduino) should disconnect when it has received all packets
+   causing this handler to be triggered."
+  (loader/disconnect (get-in state [:page :loader]))
+  (transitions/disconnect state))
+
+;; cleaning up
 
 (defn cleanup [{page :page :as state}]
-  "Called to clean up bluetooth state."
+  "Called to clean up bluetooth state (loader and scanner)."
   (when-let [loader (page :loader)]
     (loader/disconnect loader))
   (when-let [scanner (page :scanner)]

@@ -1,39 +1,19 @@
 (ns android.sebluy.gpstracker.bluetooth.transitions
-  (:require [android.sebluy.gpstracker.path :as path]
-            [android.sebluy.gpstracker.common.transitions :as common-transitions]
+  (:require [android.sebluy.gpstracker.common.transitions :as common-transitions]
             [android.sebluy.gpstracker.bluetooth.util :as util]))
 
-(defn add-path [state path]
-  (assoc-in state [:paths (path :created-at)] path))
+;; helper
+(defn serialize-path [{:keys [points]}]
+  "Create a list of strings starting with waypoint count followed by each
+   waypoint field in format '(count lat-1 lng-1 lat-2 lng-2 ...).
+   e.g. '(3 1.034 2.199 1.035 2.200 3.994 5.947) with each value as a string."
+  (cons (-> points count str) (->> points (map vals) flatten (map str))))
 
-(defn add-value-to-receiving-path [state value]
-  (update-in state [:bluetooth :values] conj value))
+;; page initialization
+(defn initialize [state bluetooth-map]
+  (common-transitions/navigate state (merge {:id :bluetooth} bluetooth-map)))
 
-(defn finish-receiving-path [state]
-  (let [path-values (get-in state [:bluetooth :values])]
-    (-> state
-        (add-path (path/make-new (path/parse-path path-values)))
-        (update :bluetooth
-                (fn [bluetooth]
-                  (-> bluetooth
-                      (dissoc :values)
-                      (assoc :status :success)))))))
-
-(defn receive-path-value [state value]
-  (let [intermediate (add-value-to-receiving-path state value)]
-    (if (= value "finish")
-      (finish-receiving-path intermediate)
-      intermediate)))
-
-(defn start-receiving-path [state device-name]
-  (update state :bluetooth
-          (fn [bluetooth]
-            (-> bluetooth
-                (assoc :status :receiving
-                       :device device-name
-                       :values [])
-                (dissoc :scanner)))))
-
+;; scanning
 (defn add-device [state device]
   (let [key (util/device-key device)]
     (assoc-in state [:page :devices key] device)))
@@ -45,8 +25,31 @@
                 (dissoc :scanner)
                 (assoc :status :idling)))))
 
-(defn start-scan [state bluetooth-map]
-  (update state :page merge bluetooth-map {:status :scanning}))
+(defn start-scan [state scanner]
+  (update state :page assoc
+          :status :scanning
+          :scanner scanner))
 
-(defn initialize [state bluetooth-map]
-  (common-transitions/navigate state (merge {:id :bluetooth} bluetooth-map)))
+;; connect
+(defn connect [state device loader]
+  (let [path (get-in state [:page :request :path])]
+    (update state :page assoc
+            :loader loader
+            :status :pending
+            :device device
+            :write-queue (serialize-path path))))
+
+;; loading stage
+(defn pop-write-queue [state]
+  (update-in state [:page :write-queue] (fn [queue] (drop 1 queue))))
+
+;; disconnect
+(defn disconnect [state]
+  (let [write-queue (get-in state [:page :write-queue])
+        result (if (empty? write-queue) :success :failure)]
+    (update state :page
+            (fn [page] (-> page
+                           (dissoc :loader)
+                           (dissoc :device)
+                           (dissoc :write-queue)
+                           (assoc :status result))))))

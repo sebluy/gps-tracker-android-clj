@@ -8,12 +8,12 @@
   (or (.getName device) (.getAddress device)))
 
 (defn bonded-devices [^BluetoothAdapter adapter]
-  (reduce (fn [devices device]
-            (assoc devices (device-key device) device))
-          {} (.getBondedDevices adapter)))
+  (into {} (map
+            (fn [device] [(device-key device) device])
+            (.getBondedDevices adapter))))
 
 (defn bluetooth-adapter [^Activity activity]
   (.. activity (getSystemService Context/BLUETOOTH_SERVICE) getAdapter))
 
-(defn bluetooth-enabled? [adapter]
+(defn bluetooth-enabled? [^BluetoothAdapter adapter]
   (and (some? adapter) (.isEnabled adapter)))
