@@ -2,37 +2,35 @@
   (:require [clojure.edn :as edn]
             [android.sebluy.gpstracker.common.transitions :as common-transitions]))
 
-(defmulti request-transition (fn [request _ _] (request :action)))
+(defn initialize [state request]
+  (common-transitions/navigate state {:id :remote
+                                      :request request
+                                      :status :disconnected}))
 
-(defmethod request-transition :get-paths [_ response-body state]
+(defmulti request-transition (fn [state request response-body] (request :action)))
+
+(defmethod request-transition :get-paths [state _ response-body]
   (assoc state :waypoint-paths (first (edn/read-string response-body))))
 
-(defmethod request-transition :default [_ _ state]
+(defmethod request-transition :default [state _ _]
   state)
 
-(defn update-request [state request]
-  (assoc-in state [:page :request] request))
-
-(defn update-status [state status]
-  (assoc-in state [:page :status] status))
-
-(defn update-request-and-status [state sent? request]
-  (-> state
-      (update-request request)
-      (update-status (if sent? :pending :disconnected))))
-
-(defn navigate-on-first [state first?]
-  (if first?
-    (common-transitions/navigate state {:id :remote})
-    state))
-
-(defn send-request [state sent? request first?]
-  (-> state
-      (navigate-on-first first?)
-      (update-request-and-status sent? request)))
+(defn send-request [state future]
+  (update state :page assoc
+          :status :pending
+          :future future))
 
 (defn receive-response [state [response-code response-body]]
-  (if (= response-code 200)
-    (let [request (get-in state [:page :request])]
-      (-> (request-transition request response-body state) (update-status :success)))
-    (update-status state :failure)))
+  (let [success (= response-code 200)
+        status (if success :success :failure)
+        request (get-in state [:page :request])]
+    (-> state
+        (cond-> success (request-transition request response-body))
+        (update :page (fn [page] (-> page
+                                     (assoc :status status)
+                                     (dissoc :future)))))))
+
+(defn attempt-receive-response [state response-attrs]
+  (cond-> state
+    (= (get-in state [:page :id]) :remote)
+    (receive-response response-attrs)))

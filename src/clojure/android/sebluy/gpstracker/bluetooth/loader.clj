@@ -30,6 +30,7 @@
   (doto (.connectGatt device activity false (make-gatt-callback loader))
     (.discoverServices)))
 
+;; causing problems with invalid bluetooth device
 (defn disconnect [gatt]
   (.close gatt)
   (.disconnect gatt))

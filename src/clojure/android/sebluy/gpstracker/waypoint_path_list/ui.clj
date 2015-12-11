@@ -19,7 +19,7 @@
      :on-click
      (fn [_]
        (state/handle
-        remote-handlers/send-request
+        remote-handlers/initialize
         {:action :get-paths :path-type :waypoint}))}]
    (if (seq waypoint-paths)
      [:list-view {:id ::list-view}]

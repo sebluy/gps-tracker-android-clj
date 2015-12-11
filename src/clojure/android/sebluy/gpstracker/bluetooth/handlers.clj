@@ -10,6 +10,7 @@
 
 (declare attempt-scan)
 (declare attempt-write-next)
+(declare disconnect)
 
 ;; initialization
 

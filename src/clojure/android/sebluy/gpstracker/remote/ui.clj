@@ -21,7 +21,7 @@
    [:button {:text "Retry"
              :layout-margin 50
              :padding 30
-             :on-click (fn [_] (state/handle handlers/retry-request))}]])
+             :on-click (fn [_] (state/handle handlers/attempt-request))}]])
 
 (defn ui [state]
   (let [status (get-in state [:page :status])]

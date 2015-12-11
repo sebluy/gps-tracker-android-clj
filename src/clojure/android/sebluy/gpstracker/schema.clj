@@ -8,13 +8,12 @@
 (s/defschema Page
   (abstract-map/abstract-map-schema :id {}))
 
-(abstract-map/extend-schema
- MainPage Page [:main] {})
-
 (s/defschema Status (s/enum :pending :success :failure :disconnected))
 
 (abstract-map/extend-schema
- RemotePage Page [:remote] {:request s/Any :status Status})
+ RemotePage Page [:remote] {:request s/Any
+                            :status Status
+                            (s/optional-key :future) s/Any})
 
 (abstract-map/extend-schema
  PathListPage Page [:waypoint-path-list] {})
