@@ -64,11 +64,15 @@
 ;; loading
 
 (defn write [state loader value]
+  "Writes next value out over bluetooth.
+   Disconnects bluetooth connection if there are no remaining values to be sent."
   (if (loader/transmit loader value)
     (transitions/pop-write-queue state)
     (disconnect state)))
 
 (defn attempt-write-next [{{loader :loader write-queue :write-queue} :page :as state}]
+  "Only writes out next value if there is one available.
+   If not it leaves the state as it was."
   (cond-> state
     (seq write-queue) (write loader (first write-queue))))
 

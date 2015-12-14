@@ -1,8 +1,6 @@
 (defproject gps-tracker/gps-tracker "0.0.1-SNAPSHOT"
-  :description "FIXME: Android project description"
-  :url "http://example.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url  "http://www.eclipse.org/legal/epl-v10.html"}
+  :description "GPS Tracker Android Application"
+  :url "https://github.com/sebluy/gps-tracker-android-clj"
 
   :global-vars {*warn-on-reflection* true}
 
@@ -29,26 +27,12 @@
                                        :manifest-options        {:app-name "GPSTracker - debug"}}}]
              :release [:android-common
                        {:target-path "target/release"
-                        :android     {;; Specify the path to your private keystore
-                                      ;; and the the alias of the key you want to
-                                      ;; sign APKs with.
-                                      ;; :keystore-path "/home/user/.android/private.keystore"
-                                      ;; :key-alias "mykeyalias"
-
-                                      :ignore-log-priority [:debug :verbose]
+                        :android     {:ignore-log-priority [:debug :verbose]
                                       :aot                 :all
                                       :build-type          :release}}]}
 
-  :android {;; Specify the path to the Android SDK directory.
-            ;; :sdk-path "/home/user/path/to/android-sdk/"
-
-            ;; Try increasing this value if dexer fails with
-            ;; OutOfMemoryException. Set the value according to your
-            ;; available RAM.
+  :android {
             :dex-opts       ["-JXmx2G" "--incremental"]
-
-            ;; If previous option didn't work, uncomment this as well.
-            ;; :force-dex-optimize true
             :aot-exclude-ns [#"schema.*"
                              "clojure.parallel"
                              "clojure.core.reducers"]})

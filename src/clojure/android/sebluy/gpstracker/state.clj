@@ -1,14 +1,11 @@
 (ns android.sebluy.gpstracker.state
   (:require [android.sebluy.gpstracker.schema :as schema]
-            [android.sebluy.gpstracker.debug :as debug]
-            [android.sebluy.gpstracker.common.transitions :as transitions]
             [neko.threading :as threading]
             [neko.notify :as notify]))
 
 (defn handle-error [agent exception]
   (threading/on-ui
-   (notify/toast "Invalid State... Check debug log"))
-  (debug/push exception))
+   (notify/toast "Something went wrong...")))
 
 ; don't reload or activity will be lost and ui will still
 ; be attached to old state
@@ -21,8 +18,5 @@
   "Calls handler-fn on state agent with the current value of state
    as the first argument. New state will be result of
    (handler-fn state args)"
-  ;; remove this in production
-  (debug/push @state)
-  (debug/push handler-fn)
   (send state (fn [state]
                 (apply handler-fn state args))))

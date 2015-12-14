@@ -36,6 +36,9 @@
   (.disconnect gatt))
 
 (defn uart-characteristic [gatt]
+  "Gets the retrieves the UART characteristic used for sending
+   values over the bluetooth connection. This characteristic is
+   for sending values from this android to another device."
   (some-> gatt
           (.getService RX_SERVICE_UUID)
           (.getCharacteristic RX_CHARA_UUID)))
